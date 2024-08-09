@@ -1,8 +1,8 @@
 package com.quickweather.controller;
 
 import com.quickweather.dto.UserDto;
-import com.quickweather.repository.UserCreationRepository;
 import com.quickweather.service.UserCreationService;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -16,7 +16,7 @@ public class UserCreationController {
     }
 
     @PostMapping
-    public void register(@RequestBody UserDto userDto) {
+    public void register(@Valid @RequestBody UserDto userDto) {
         userCreationService.createUser(userDto);
     }
 
