@@ -2,6 +2,7 @@ package com.quickweather.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 public class UserDto {
@@ -13,6 +14,7 @@ public class UserDto {
     private String lastName;
     @NotBlank(message = "Password is mandatory")
     @Size(min = 8, message = "password must be minimum 8 characters long")
+    @Pattern(regexp = ".*[!@#$%^&*(),.?\\\":{}|<>].*")
     private String password;
     @NotBlank(message = "Email is mandatory")
     @Email(message = "email must be valid")
