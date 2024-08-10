@@ -3,6 +3,7 @@ package com.quickweather.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
@@ -26,6 +27,7 @@ public class User {
 
     @NotBlank(message = "Password is mandatory")
     @Size(min = 8, message = "password must be minimum 8 characters long")
+    @Pattern(regexp = ".*[!@#$%^&*(),.?\\\":{}|<>].*")
     private String password;
 
     @NotBlank(message = "Email is mandatory")
