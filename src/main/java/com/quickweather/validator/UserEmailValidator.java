@@ -18,9 +18,6 @@ public class UserEmailValidator implements Validator {
         this.userCreationRepository = userCreationRepository;
     }
 
-    public UserEmailValidator() {
-    }
-
     @Override
     public void setNext(Validator nextValidator) {
         this.nextValidator = nextValidator;

@@ -22,7 +22,7 @@ public class UserValidator {
 
         UserFirstNameValidator userFirstNameValidator = new UserFirstNameValidator();
         UserLastNameValidator userLastNameValidator = new UserLastNameValidator();
-        UserEmailValidator userEmailValidator = new UserEmailValidator();
+        UserEmailValidator userEmailValidator = new UserEmailValidator(userCreationRepository);
         UserPasswordValidator userPasswordValidator = new UserPasswordValidator();
         UserPhoneNumberValidator userPhoneNumberValidator = new UserPhoneNumberValidator();
 
