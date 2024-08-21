@@ -29,7 +29,7 @@ public class UserEmailValidator implements Validator {
         if (email == null) {
             throw new IllegalArgumentException("email is null");
         }
-        if (email.matches(EMAIL_REGEX)) {
+        if (!email.matches(EMAIL_REGEX)) {
             throw new IllegalArgumentException("email is not valid");
         }
         if (userCreationRepository.existsByEmail(email)) {
