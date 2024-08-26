@@ -17,10 +17,6 @@ class UserPhoneNumberValidatorTest {
     @Test
     void givenPhoneNumber_whenPhoneNumberIsOk_thenDoesNotThrowException() {
         UserDto userDto = UserDto.builder()
-                .firstName("firstname")
-                .lastName("lastname")
-                .password("P@sword!")
-                .email("valid.email@example.com")
                 .phoneNumber("2343234511")
                 .build();
 
@@ -30,10 +26,6 @@ class UserPhoneNumberValidatorTest {
     @Test
     void givenPhoneNumber_whenPhoneNumberIsNull_thenThrowException() {
         UserDto userDto = UserDto.builder()
-                .firstName("firstname")
-                .lastName("lastname")
-                .password("P@sword!")
-                .email("valid.email@example.com")
                 .phoneNumber(null)
                 .build();
 
@@ -44,10 +36,6 @@ class UserPhoneNumberValidatorTest {
     @Test
     void givenPhoneNumber_whenPhoneNumberTooShort_thenThrowException() {
         UserDto userDto = UserDto.builder()
-                .firstName("firstname")
-                .lastName("lastname")
-                .password("P@sword!")
-                .email("valid.email@example.com")
                 .phoneNumber("123")
                 .build();
 
@@ -58,10 +46,6 @@ class UserPhoneNumberValidatorTest {
     @Test
     void givenPhoneNumber_whenPhoneNumberTooLong_thenThrowException() {
         UserDto userDto = UserDto.builder()
-                .firstName("firstname")
-                .lastName("lastname")
-                .password("P@sword!")
-                .email("valid.email@example.com")
                 .phoneNumber("1".repeat(16))
                 .build();
 

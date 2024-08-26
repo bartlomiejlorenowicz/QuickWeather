@@ -17,57 +17,41 @@ class UserFirstNameValidatorTest {
     private UserCreationRepository userCreationRepository;
 
     @InjectMocks
-    private UserValidator userValidator;
+    private UserFirstNameValidator userFirstNameValidator;
 
     @Test
     void validateFirstName_whenFirstNameIsNull_thenReturnException() {
         UserDto userDto = UserDto.builder()
                 .firstName(null)
-                .lastName("lastname")
-                .password("pass")
-                .email("email@email.pl")
-                .phoneNumber("2343234511")
                 .build();
 
-        assertThrows(IllegalArgumentException.class, () -> userValidator.validate(userDto));
+        assertThrows(IllegalArgumentException.class, () -> userFirstNameValidator.validate(userDto));
     }
 
     @Test
     void validateFirstName_whenFirstNameIsOk_thenDoesNotThrowException() {
         UserDto userDto = UserDto.builder()
                 .firstName("firstname")
-                .lastName("lastname")
-                .password("pass")
-                .email("valid.email@example.com")
-                .phoneNumber("2343234511")
                 .build();
 
-        assertDoesNotThrow(() -> userValidator.validate(userDto));
+        assertDoesNotThrow(() -> userFirstNameValidator.validate(userDto));
     }
 
     @Test
     void validateFirstName_whenFirstNameIsTooShort_thenThrowException() {
         UserDto userDto = UserDto.builder()
                 .firstName("f")
-                .lastName("lastname")
-                .password("pass")
-                .email("valid.email@example.com")
-                .phoneNumber("2343234511")
                 .build();
 
-        assertThrows(IllegalArgumentException.class, () -> userValidator.validate(userDto));
+        assertThrows(IllegalArgumentException.class, () -> userFirstNameValidator.validate(userDto));
     }
 
     @Test
     void validateFirstName_whenFirstNameIsTooLong_thenThrowException() {
         UserDto userDto = UserDto.builder()
                 .firstName("f".repeat(31))
-                .lastName("lastname")
-                .password("pass")
-                .email("valid.email@example.com")
-                .phoneNumber("2343234511")
                 .build();
 
-        assertThrows(IllegalArgumentException.class, () -> userValidator.validate(userDto));
+        assertThrows(IllegalArgumentException.class, () -> userFirstNameValidator.validate(userDto));
     }
 }
