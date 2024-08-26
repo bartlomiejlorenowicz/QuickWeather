@@ -4,17 +4,10 @@ import com.quickweather.dto.UserDto;
 
 import static java.util.Objects.isNull;
 
-public class UserLastNameValidator implements Validator {
-
-    private Validator nextValidator;
+public class UserLastNameValidator extends AbstractValidator {
 
     @Override
-    public void setNext(Validator nextValidator) {
-        this.nextValidator = nextValidator;
-    }
-
-    @Override
-    public void validate(UserDto userDto) {
+    protected void doValidate(UserDto userDto) {
         String lastName = userDto.getLastName();
         if (isNull(lastName)) {
             throw new IllegalArgumentException("lastname i null");
@@ -26,9 +19,6 @@ public class UserLastNameValidator implements Validator {
         boolean lastNameTooLong = lastName.length() > 30;
         if (lastNameTooLong) {
             throw new IllegalArgumentException("last name must have maximum 30 letters");
-        }
-        if (nextValidator != null) {
-            nextValidator.validate(userDto);
         }
     }
 }
