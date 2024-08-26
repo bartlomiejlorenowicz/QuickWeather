@@ -4,6 +4,9 @@ import com.quickweather.dto.UserDto;
 import com.quickweather.repository.UserCreationRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+
+import static java.util.Objects.isNull;
+
 @Slf4j
 @Component
 public class UserEmailValidator implements Validator {
@@ -26,13 +29,15 @@ public class UserEmailValidator implements Validator {
     @Override
     public void validate(UserDto userDto) {
         String email = userDto.getEmail();
-        if (email == null) {
+        if (isNull(email)) {
             throw new IllegalArgumentException("email is null");
         }
-        if (!email.matches(EMAIL_REGEX)) {
+        boolean incorrectEmail = !email.matches(EMAIL_REGEX);
+        if (incorrectEmail) {
             throw new IllegalArgumentException("email is not valid");
         }
-        if (userCreationRepository.existsByEmail(email)) {
+        boolean emailExistInDatabase = userCreationRepository.existsByEmail(email);
+        if (emailExistInDatabase) {
             throw new IllegalArgumentException("the given e-mail exists in the database");
         }
     }

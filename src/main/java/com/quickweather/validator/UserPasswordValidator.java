@@ -2,9 +2,11 @@ package com.quickweather.validator;
 
 import com.quickweather.dto.UserDto;
 
+import static java.util.Objects.isNull;
+
 public class UserPasswordValidator implements Validator {
 
-    private static final String PASSWORD_REGEX = ".*[!@#$%^&*(),.?\\\":{}|<>].*";
+    private static final String PASSWORD_SPECIAL_CHARACTER = ".*[!@#$%^&*(),.?\\\":{}|<>].*";
 
     private Validator nextValidator;
 
@@ -16,13 +18,15 @@ public class UserPasswordValidator implements Validator {
     @Override
     public void validate(UserDto userDto) {
         String password = userDto.getPassword();
-        if (password == null) {
+        if (isNull(password)) {
             throw new IllegalArgumentException("password is null");
         }
-        if (password.length() < 8) {
+        boolean passwordTooShort = password.length() < 8;
+        if (passwordTooShort) {
             throw new IllegalArgumentException("password must be minimum 8 characters long");
         }
-        if (!password.matches(PASSWORD_REGEX)) {
+        boolean passwordDoesNotHaveSpecialCharacter = !password.matches(PASSWORD_SPECIAL_CHARACTER);
+        if (passwordDoesNotHaveSpecialCharacter) {
             throw new IllegalArgumentException("password does not contain a special character");
         }
         if (nextValidator != null) {
