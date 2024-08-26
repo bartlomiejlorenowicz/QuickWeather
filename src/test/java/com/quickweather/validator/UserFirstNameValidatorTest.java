@@ -2,48 +2,71 @@ package com.quickweather.validator;
 
 import com.quickweather.dto.UserDto;
 import com.quickweather.repository.UserCreationRepository;
-import org.junit.Before;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@ExtendWith(MockitoExtension.class)
 class UserFirstNameValidatorTest {
 
-    private UserValidator userValidator;
+    @Mock
     private UserCreationRepository userCreationRepository;
 
-    @BeforeEach
-    void setup() {
-        userCreationRepository = Mockito.mock(UserCreationRepository.class);
-        userValidator = new UserValidator(userCreationRepository);
-    }
+    @InjectMocks
+    private UserValidator userValidator;
 
     @Test
-    void validate_whenFirstNameIsNull_thenReturnException() {
-        UserDto userDto = new UserDto(null, "lastname", "pass", "email@email.pl", "2343234511");
+    void validateFirstName_whenFirstNameIsNull_thenReturnException() {
+        UserDto userDto = UserDto.builder()
+                .firstName(null)
+                .lastName("lastname")
+                .password("pass")
+                .email("email@email.pl")
+                .phoneNumber("2343234511")
+                .build();
 
         assertThrows(IllegalArgumentException.class, () -> userValidator.validate(userDto));
     }
 
     @Test
-    void validate_whenFirstNameIsOk_thenDoesNotThrowException() {
-        UserDto userDto = new UserDto("firstname", "lastname", "pass", "valid.email@example.com", "2343234511");
+    void validateFirstName_whenFirstNameIsOk_thenDoesNotThrowException() {
+        UserDto userDto = UserDto.builder()
+                .firstName("firstname")
+                .lastName("lastname")
+                .password("pass")
+                .email("valid.email@example.com")
+                .phoneNumber("2343234511")
+                .build();
 
         assertDoesNotThrow(() -> userValidator.validate(userDto));
     }
 
     @Test
-    void validate_whenFirstNameIsTooShort_thenThrowException() {
-        UserDto userDto = new UserDto("f", "lastname", "pass", "valid.email@example.com", "2343234511");
+    void validateFirstName_whenFirstNameIsTooShort_thenThrowException() {
+        UserDto userDto = UserDto.builder()
+                .firstName("f")
+                .lastName("lastname")
+                .password("pass")
+                .email("valid.email@example.com")
+                .phoneNumber("2343234511")
+                .build();
 
         assertThrows(IllegalArgumentException.class, () -> userValidator.validate(userDto));
     }
 
     @Test
-    void validate_whenFirstNameIsTooLong_thenThrowException() {
-        UserDto userDto = new UserDto("f".repeat(31), "lastname", "pass", "valid.email@example.com", "2343234511");
+    void validateFirstName_whenFirstNameIsTooLong_thenThrowException() {
+        UserDto userDto = UserDto.builder()
+                .firstName("f".repeat(31))
+                .lastName("lastname")
+                .password("pass")
+                .email("valid.email@example.com")
+                .phoneNumber("2343234511")
+                .build();
 
         assertThrows(IllegalArgumentException.class, () -> userValidator.validate(userDto));
     }
