@@ -18,58 +18,42 @@ class UserEmailValidatorTest {
     private UserCreationRepository userCreationRepository;
 
     @InjectMocks
-    private UserValidator userValidator;
+    private UserEmailValidator userEmailValidator;
 
     @Test
     void givenEmail_WhenEmailOk_thenDoesNotThrowException() {
         UserDto userDto = UserDto.builder()
-                .firstName("firstname")
-                .lastName("lastname")
-                .password("pass123!")
                 .email("first@wp.pl")
-                .phoneNumber("1234567891")
                 .build();
 
-        assertDoesNotThrow(() -> userValidator.validate(userDto));
+        assertDoesNotThrow(() -> userEmailValidator.validate(userDto));
     }
 
     @Test
     void givenEmail_WhenEmailNotOk_thenThrowException() {
         UserDto userDto = UserDto.builder()
-                .firstName("firstname")
-                .lastName("lastname")
-                .password("pass123!")
                 .email("first.pl")
-                .phoneNumber("1234567891")
                 .build();
 
-        assertThrows(IllegalArgumentException.class, () -> userValidator.validate(userDto));
+        assertThrows(IllegalArgumentException.class, () -> userEmailValidator.validate(userDto));
     }
 
     @Test
     void givenEmail_WhenEmailIsNull_thenThrowException() {
         UserDto userDto = UserDto.builder()
-                .firstName("firstname")
-                .lastName("lastname")
-                .password("pass123!")
                 .email(null)
-                .phoneNumber("1234567891")
                 .build();
 
-        assertThrows(IllegalArgumentException.class, () -> userValidator.validate(userDto));
+        assertThrows(IllegalArgumentException.class, () -> userEmailValidator.validate(userDto));
     }
 
     @Test
     void givenEmail_WhenEmailExist_thenThrowException() {
         UserDto userDto = UserDto.builder()
-                .firstName("firstname")
-                .lastName("lastname")
-                .password("pass123!")
                 .email("first@wp.pl")
-                .phoneNumber("1234567891")
                 .build();
         when(userCreationRepository.existsByEmail(userDto.getEmail())).thenReturn(true);
 
-        assertThrows(IllegalArgumentException.class, () -> userValidator.validate(userDto));
+        assertThrows(IllegalArgumentException.class, () -> userEmailValidator.validate(userDto));
     }
 }
