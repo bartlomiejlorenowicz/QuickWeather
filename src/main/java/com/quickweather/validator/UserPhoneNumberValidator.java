@@ -4,17 +4,10 @@ import com.quickweather.dto.UserDto;
 
 import static java.util.Objects.isNull;
 
-public class UserPhoneNumberValidator implements Validator {
-
-    private Validator nextValidator;
+public class UserPhoneNumberValidator extends AbstractValidator {
 
     @Override
-    public void setNext(Validator nextValidator) {
-        this.nextValidator = nextValidator;
-    }
-
-    @Override
-    public void validate(UserDto userDto) {
+    public void doValidate(UserDto userDto) {
         String phoneNumber = userDto.getPhoneNumber();
         if (isNull(phoneNumber)) {
             throw new IllegalArgumentException("phone number is null");
