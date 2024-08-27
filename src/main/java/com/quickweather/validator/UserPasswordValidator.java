@@ -4,12 +4,12 @@ import com.quickweather.dto.UserDto;
 
 import static java.util.Objects.isNull;
 
-public class UserPasswordValidator extends AbstractValidator {
+public class UserPasswordValidator extends Validator {
 
     private static final String PASSWORD_SPECIAL_CHARACTER = ".*[!@#$%^&*(),.?\\\":{}|<>].*";
 
     @Override
-    public void doValidate(UserDto userDto) {
+    public void validate(UserDto userDto) {
         String password = userDto.getPassword();
         if (isNull(password)) {
             throw new IllegalArgumentException("password is null");
@@ -22,8 +22,6 @@ public class UserPasswordValidator extends AbstractValidator {
         if (passwordDoesNotHaveSpecialCharacter) {
             throw new IllegalArgumentException("password does not contain a special character");
         }
-        if (nextValidator != null) {
-            nextValidator.validate(userDto);
-        }
+        validateNext(userDto);
     }
 }

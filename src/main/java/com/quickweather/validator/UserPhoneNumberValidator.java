@@ -4,10 +4,10 @@ import com.quickweather.dto.UserDto;
 
 import static java.util.Objects.isNull;
 
-public class UserPhoneNumberValidator extends AbstractValidator {
+public class UserPhoneNumberValidator extends Validator {
 
     @Override
-    public void doValidate(UserDto userDto) {
+    public void validate(UserDto userDto) {
         String phoneNumber = userDto.getPhoneNumber();
         if (isNull(phoneNumber)) {
             throw new IllegalArgumentException("phone number is null");
@@ -20,5 +20,6 @@ public class UserPhoneNumberValidator extends AbstractValidator {
         if (phoneNumberTooLong) {
             throw new IllegalArgumentException("phone number must have maximum 15 digits");
         }
+        validateNext(userDto);
     }
 }

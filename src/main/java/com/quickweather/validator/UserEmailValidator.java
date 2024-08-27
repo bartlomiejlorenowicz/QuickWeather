@@ -9,7 +9,7 @@ import static java.util.Objects.isNull;
 
 @Slf4j
 @Component
-public class UserEmailValidator extends AbstractValidator {
+public class UserEmailValidator extends Validator {
 
     private static final String EMAIL_REGEX = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,6}$";
 
@@ -20,7 +20,7 @@ public class UserEmailValidator extends AbstractValidator {
     }
 
     @Override
-    protected void doValidate(UserDto userDto) {
+    public void validate(UserDto userDto) {
         String email = userDto.getEmail();
         if (isNull(email)) {
             throw new IllegalArgumentException("email is null");
@@ -33,5 +33,6 @@ public class UserEmailValidator extends AbstractValidator {
         if (emailExistInDatabase) {
             throw new IllegalArgumentException("the given e-mail exists in the database");
         }
+        validateNext(userDto);
     }
 }
