@@ -12,23 +12,20 @@ import java.util.regex.Pattern;
 @Slf4j
 public class UserValidator {
 
-    private final Validator validatorChain;
+    private final Validator validator;
 
     public UserValidator(UserCreationRepository userCreationRepository) {
-        UserFirstNameValidator firstNameValidator = new UserFirstNameValidator();
-        UserLastNameValidator lastNameValidator = new UserLastNameValidator();
-        UserEmailValidator emailValidator = new UserEmailValidator(userCreationRepository);
-        UserPasswordValidator passwordValidator = new UserPasswordValidator();
-        UserPhoneNumberValidator phoneNumberValidator = new UserPhoneNumberValidator();
-
-        this.validatorChain = ValidatorChainBuilder.buildChain(
-                Arrays.asList(firstNameValidator, lastNameValidator, emailValidator, passwordValidator, phoneNumberValidator)
+        validator = Validator.link(
+                new UserEmailValidator(userCreationRepository),
+                new UserFirstNameValidator(),
+                new UserLastNameValidator(),
+                new UserPasswordValidator()
         );
     }
 
     public void validate(UserDto userDto) {
         log.info("Starting validation for user with email: " + userDto.getEmail());
-        validatorChain.validate(userDto);
+        validator.validate(userDto);
         log.info("Validation finished for user with email: " + userDto.getEmail());
     }
 }
