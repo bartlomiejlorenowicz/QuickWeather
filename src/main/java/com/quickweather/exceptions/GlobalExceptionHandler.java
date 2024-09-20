@@ -34,6 +34,13 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
+    @ExceptionHandler(InvalidEmailAlreadyExistException.class)
+    public ResponseEntity<Map<String, String>> handleInvalidEmailExceptionEmailExist(InvalidEmailAlreadyExistException ex) {
+        Map<String, String> response = new HashMap<>();
+        response.put(MESSAGE, ex.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+    }
+
     @ExceptionHandler(InvalidPasswordException.class)
     public ResponseEntity<Map<String, String>> handleInvalidPasswordException(InvalidPasswordException ex) {
         Map<String, String> response = new HashMap<>();
