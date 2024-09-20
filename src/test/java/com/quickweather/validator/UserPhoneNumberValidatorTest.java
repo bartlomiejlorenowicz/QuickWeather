@@ -1,6 +1,7 @@
 package com.quickweather.validator;
 
 import com.quickweather.dto.UserDto;
+import com.quickweather.exceptions.InvalidPhoneNumberException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -29,7 +30,7 @@ class UserPhoneNumberValidatorTest {
                 .phoneNumber(null)
                 .build();
 
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> userPhoneNumberValidator.validate(userDto));
+        InvalidPhoneNumberException exception = assertThrows(InvalidPhoneNumberException.class, () -> userPhoneNumberValidator.validate(userDto));
         assertEquals("phone number is null", exception.getMessage());
     }
 
@@ -39,7 +40,7 @@ class UserPhoneNumberValidatorTest {
                 .phoneNumber("123")
                 .build();
 
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> userPhoneNumberValidator.validate(userDto));
+        InvalidPhoneNumberException exception = assertThrows(InvalidPhoneNumberException.class, () -> userPhoneNumberValidator.validate(userDto));
         assertEquals("phone number must have at least 10 digits", exception.getMessage());
     }
 
@@ -49,7 +50,7 @@ class UserPhoneNumberValidatorTest {
                 .phoneNumber("1".repeat(16))
                 .build();
 
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> userPhoneNumberValidator.validate(userDto));
+        InvalidPhoneNumberException exception = assertThrows(InvalidPhoneNumberException.class, () -> userPhoneNumberValidator.validate(userDto));
         assertEquals("phone number must have maximum 15 digits", exception.getMessage());
     }
 }

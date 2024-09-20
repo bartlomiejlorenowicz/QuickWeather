@@ -1,6 +1,7 @@
 package com.quickweather.validator;
 
 import com.quickweather.dto.UserDto;
+import com.quickweather.exceptions.InvalidEmailException;
 import com.quickweather.repository.UserCreationRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -13,7 +14,7 @@ public class UserEmailValidator extends Validator {
 
     private static final String EMAIL_REGEX = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,6}$";
 
-    private UserCreationRepository userCreationRepository;
+    private final UserCreationRepository userCreationRepository;
 
     public UserEmailValidator(UserCreationRepository userCreationRepository) {
         this.userCreationRepository = userCreationRepository;
@@ -23,15 +24,15 @@ public class UserEmailValidator extends Validator {
     public void validate(UserDto userDto) {
         String email = userDto.getEmail();
         if (isNull(email)) {
-            throw new IllegalArgumentException("email is null");
+            throw new InvalidEmailException("email is null");
         }
         boolean incorrectEmail = !email.matches(EMAIL_REGEX);
         if (incorrectEmail) {
-            throw new IllegalArgumentException("email is not valid");
+            throw new InvalidEmailException("email is not valid");
         }
         boolean emailExistInDatabase = userCreationRepository.existsByEmail(email);
         if (emailExistInDatabase) {
-            throw new IllegalArgumentException("the given e-mail exists in the database");
+            throw new InvalidEmailException("the given e-mail exists in the database");
         }
         validateNext(userDto);
     }

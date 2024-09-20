@@ -1,6 +1,7 @@
 package com.quickweather.validator;
 
 import com.quickweather.dto.UserDto;
+import com.quickweather.exceptions.InvalidPasswordException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -29,7 +30,7 @@ class UserPasswordValidatorTest {
                 .password(null)
                 .build();
 
-        assertThrows(IllegalArgumentException.class, () -> userPasswordValidator.validate(userDto));
+        assertThrows(InvalidPasswordException.class, () -> userPasswordValidator.validate(userDto));
     }
 
     @Test
@@ -38,7 +39,7 @@ class UserPasswordValidatorTest {
                 .password("abc")
                 .build();
 
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> userPasswordValidator.validate(userDto));
+        InvalidPasswordException exception = assertThrows(InvalidPasswordException.class, () -> userPasswordValidator.validate(userDto));
         assertEquals("password must be minimum 8 characters long", exception.getMessage());
     }
 
@@ -48,7 +49,7 @@ class UserPasswordValidatorTest {
                 .password("computer123")
                 .build();
 
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> userPasswordValidator.validate(userDto));
+        InvalidPasswordException exception = assertThrows(InvalidPasswordException.class, () -> userPasswordValidator.validate(userDto));
         assertEquals("password does not contain a special character", exception.getMessage());
     }
 

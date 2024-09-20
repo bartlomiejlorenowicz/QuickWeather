@@ -1,6 +1,7 @@
 package com.quickweather.validator;
 
 import com.quickweather.dto.UserDto;
+import com.quickweather.exceptions.InvalidFirstNameException;
 import com.quickweather.repository.UserCreationRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,7 +26,7 @@ class UserFirstNameValidatorTest {
                 .firstName(null)
                 .build();
 
-        assertThrows(IllegalArgumentException.class, () -> userFirstNameValidator.validate(userDto));
+        assertThrows(InvalidFirstNameException.class, () -> userFirstNameValidator.validate(userDto));
     }
 
     @Test
@@ -43,7 +44,7 @@ class UserFirstNameValidatorTest {
                 .firstName("f")
                 .build();
 
-        assertThrows(IllegalArgumentException.class, () -> userFirstNameValidator.validate(userDto));
+        assertThrows(InvalidFirstNameException.class, () -> userFirstNameValidator.validate(userDto));
     }
 
     @Test
@@ -52,6 +53,6 @@ class UserFirstNameValidatorTest {
                 .firstName("f".repeat(31))
                 .build();
 
-        assertThrows(IllegalArgumentException.class, () -> userFirstNameValidator.validate(userDto));
+        assertThrows(InvalidFirstNameException.class, () -> userFirstNameValidator.validate(userDto));
     }
 }
