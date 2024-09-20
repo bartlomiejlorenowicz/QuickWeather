@@ -1,6 +1,7 @@
 package com.quickweather.validator;
 
 import com.quickweather.dto.UserDto;
+import com.quickweather.exceptions.InvalidEmailAlreadyExistException;
 import com.quickweather.exceptions.InvalidEmailException;
 import com.quickweather.repository.UserCreationRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -32,7 +33,7 @@ public class UserEmailValidator extends Validator {
         }
         boolean emailExistInDatabase = userCreationRepository.existsByEmail(email);
         if (emailExistInDatabase) {
-            throw new InvalidEmailException("the given e-mail exists in the database");
+            throw new InvalidEmailAlreadyExistException("the given e-mail exists in the database");
         }
         validateNext(userDto);
     }
