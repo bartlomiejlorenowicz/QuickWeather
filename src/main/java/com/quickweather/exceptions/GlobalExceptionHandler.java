@@ -12,46 +12,19 @@ import java.util.Map;
 public class GlobalExceptionHandler {
 
     public static final String MESSAGE = "message";
+    public static final String ERROR_TYPE = "errorType";
 
-    @ExceptionHandler(InvalidFirstNameException.class)
-    public ResponseEntity<Map<String, String>> handleInvalidFirstNameException(InvalidFirstNameException ex) {
+    @ExceptionHandler(UserValidationException.class)
+    public ResponseEntity<Map<String, String>> handlerUserValidationException(UserValidationException ex) {
         Map<String, String> response = new HashMap<>();
         response.put(MESSAGE, ex.getMessage());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        response.put(ERROR_TYPE, ex.getUserErrorType().name());
+
+        HttpStatus status = HttpStatus.BAD_REQUEST;
+        if (ex.getUserErrorType() == UserErrorType.EMAIL_ALREADY_EXISTS) {
+            status = HttpStatus.CONFLICT;
+        }
+        return ResponseEntity.status(status).body(response);
     }
 
-    @ExceptionHandler(InvalidLastNameException.class)
-    public ResponseEntity<Map<String, String>> handleInvalidLastNameException(InvalidLastNameException ex) {
-        Map<String, String> response = new HashMap<>();
-        response.put(MESSAGE, ex.getMessage());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-    }
-
-    @ExceptionHandler(InvalidEmailException.class)
-    public ResponseEntity<Map<String, String>> handleInvalidEmailException(InvalidEmailException ex) {
-        Map<String, String> response = new HashMap<>();
-        response.put(MESSAGE, ex.getMessage());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-    }
-
-    @ExceptionHandler(InvalidEmailAlreadyExistException.class)
-    public ResponseEntity<Map<String, String>> handleInvalidEmailExceptionEmailExist(InvalidEmailAlreadyExistException ex) {
-        Map<String, String> response = new HashMap<>();
-        response.put(MESSAGE, ex.getMessage());
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
-    }
-
-    @ExceptionHandler(InvalidPasswordException.class)
-    public ResponseEntity<Map<String, String>> handleInvalidPasswordException(InvalidPasswordException ex) {
-        Map<String, String> response = new HashMap<>();
-        response.put(MESSAGE, ex.getMessage());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-    }
-
-    @ExceptionHandler(InvalidPhoneNumberException.class)
-    public ResponseEntity<Map<String, String>> handleInvalidPhoneNumberException(InvalidPhoneNumberException ex) {
-        Map<String, String> response = new HashMap<>();
-        response.put(MESSAGE, ex.getMessage());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-    }
 }
