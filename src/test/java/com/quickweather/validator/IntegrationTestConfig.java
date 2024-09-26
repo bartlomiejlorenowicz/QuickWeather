@@ -19,10 +19,10 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 public class IntegrationTestConfig {
 
     @Autowired
-    MockMvc mockMvc;
+    protected MockMvc mockMvc;
 
     @Autowired
-    ObjectMapper objectMapper;
+    protected ObjectMapper objectMapper;
 
     @Container
     static PostgreSQLContainer weatherDb = new PostgreSQLContainer("postgres:15");
@@ -38,7 +38,4 @@ public class IntegrationTestConfig {
         dynamicPropertyRegistry.add("spring.datasource.password", weatherDb::getPassword);
 
     }
-
-
-
 }
