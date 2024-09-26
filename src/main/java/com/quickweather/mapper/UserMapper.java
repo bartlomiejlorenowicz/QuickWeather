@@ -5,11 +5,12 @@ import com.quickweather.dto.UserDto;
 import com.quickweather.entity.User;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+
 @Slf4j
 @Component
 public class UserMapper {
 
-    private ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper;
 
     public UserMapper(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
