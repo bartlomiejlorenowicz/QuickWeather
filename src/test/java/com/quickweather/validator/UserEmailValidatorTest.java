@@ -1,7 +1,7 @@
 package com.quickweather.validator;
 
 import com.quickweather.dto.UserDto;
-import com.quickweather.exceptions.InvalidEmailException;
+import com.quickweather.exceptions.UserValidationException;
 import com.quickweather.repository.UserCreationRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,7 +36,7 @@ class UserEmailValidatorTest {
                 .email("first.pl")
                 .build();
 
-        assertThrows(InvalidEmailException.class, () -> userEmailValidator.validate(userDto));
+        assertThrows(UserValidationException.class, () -> userEmailValidator.validate(userDto));
     }
 
     @Test
@@ -45,7 +45,7 @@ class UserEmailValidatorTest {
                 .email(null)
                 .build();
 
-        assertThrows(InvalidEmailException.class, () -> userEmailValidator.validate(userDto));
+        assertThrows(UserValidationException.class, () -> userEmailValidator.validate(userDto));
     }
 
     @Test
@@ -55,6 +55,6 @@ class UserEmailValidatorTest {
                 .build();
         when(userCreationRepository.existsByEmail(userDto.getEmail())).thenReturn(true);
 
-        assertThrows(InvalidEmailException.class, () -> userEmailValidator.validate(userDto));
+        assertThrows(UserValidationException.class, () -> userEmailValidator.validate(userDto));
     }
 }
