@@ -1,22 +1,17 @@
 package com.quickweather.validator;
 
 import com.quickweather.dto.UserDto;
-import com.quickweather.exceptions.InvalidLastNameException;
-import com.quickweather.repository.UserCreationRepository;
+import com.quickweather.exceptions.UserValidationException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 @ExtendWith(MockitoExtension.class)
 class UserLastNameValidatorTest {
-
-    @Mock
-    private UserCreationRepository userCreationRepository;
 
     @InjectMocks
     private UserLastNameValidator userLastNameValidator;
@@ -27,7 +22,7 @@ class UserLastNameValidatorTest {
                 .lastName(null)
                 .build();
 
-        Assertions.assertThrows(InvalidLastNameException.class, () -> userLastNameValidator.validate(userDto));
+        Assertions.assertThrows(UserValidationException.class, () -> userLastNameValidator.validate(userDto));
     }
 
     @Test
@@ -36,7 +31,7 @@ class UserLastNameValidatorTest {
                 .lastName("l")
                 .build();
 
-        Assertions.assertThrows(InvalidLastNameException.class, () -> userLastNameValidator.validate(userDto));
+        Assertions.assertThrows(UserValidationException.class, () -> userLastNameValidator.validate(userDto));
     }
 
     @Test
@@ -45,7 +40,7 @@ class UserLastNameValidatorTest {
                 .lastName("l".repeat(31))
                 .build();
 
-        Assertions.assertThrows(InvalidLastNameException.class, () -> userLastNameValidator.validate(userDto));
+        Assertions.assertThrows(UserValidationException.class, () -> userLastNameValidator.validate(userDto));
     }
 
     @Test

@@ -1,21 +1,16 @@
 package com.quickweather.validator;
 
 import com.quickweather.dto.UserDto;
-import com.quickweather.exceptions.InvalidFirstNameException;
-import com.quickweather.repository.UserCreationRepository;
+import com.quickweather.exceptions.UserValidationException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(MockitoExtension.class)
 class UserFirstNameValidatorTest {
-
-    @Mock
-    private UserCreationRepository userCreationRepository;
 
     @InjectMocks
     private UserFirstNameValidator userFirstNameValidator;
@@ -26,7 +21,7 @@ class UserFirstNameValidatorTest {
                 .firstName(null)
                 .build();
 
-        assertThrows(InvalidFirstNameException.class, () -> userFirstNameValidator.validate(userDto));
+        assertThrows(UserValidationException.class, () -> userFirstNameValidator.validate(userDto));
     }
 
     @Test
@@ -44,7 +39,7 @@ class UserFirstNameValidatorTest {
                 .firstName("f")
                 .build();
 
-        assertThrows(InvalidFirstNameException.class, () -> userFirstNameValidator.validate(userDto));
+        assertThrows(UserValidationException.class, () -> userFirstNameValidator.validate(userDto));
     }
 
     @Test
@@ -53,6 +48,6 @@ class UserFirstNameValidatorTest {
                 .firstName("f".repeat(31))
                 .build();
 
-        assertThrows(InvalidFirstNameException.class, () -> userFirstNameValidator.validate(userDto));
+        assertThrows(UserValidationException.class, () -> userFirstNameValidator.validate(userDto));
     }
 }
