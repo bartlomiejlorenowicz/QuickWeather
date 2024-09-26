@@ -9,7 +9,7 @@ public abstract class Validator {
 
     public static Validator link(Validator first, Validator... chain) {
         Validator head = first;
-        for (Validator nextInChain: chain) {
+        for (Validator nextInChain : chain) {
             head.next = nextInChain;
             head = nextInChain;
         }

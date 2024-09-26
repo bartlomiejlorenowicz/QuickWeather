@@ -1,8 +1,8 @@
 package com.quickweather.validator;
 
 import com.quickweather.dto.UserDto;
-import com.quickweather.exceptions.InvalidEmailAlreadyExistException;
-import com.quickweather.exceptions.InvalidEmailException;
+import com.quickweather.exceptions.UserErrorType;
+import com.quickweather.exceptions.UserValidationException;
 import com.quickweather.repository.UserCreationRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -24,16 +24,17 @@ public class UserEmailValidator extends Validator {
     @Override
     public void validate(UserDto userDto) {
         String email = userDto.getEmail();
+
         if (isNull(email)) {
-            throw new InvalidEmailException("email is null");
+            throw new UserValidationException(UserErrorType.INVALID_EMAIL, "email is null");
         }
         boolean incorrectEmail = !email.matches(EMAIL_REGEX);
         if (incorrectEmail) {
-            throw new InvalidEmailException("email is not valid");
+            throw new UserValidationException(UserErrorType.INVALID_EMAIL, "email is not valid");
         }
         boolean emailExistInDatabase = userCreationRepository.existsByEmail(email);
         if (emailExistInDatabase) {
-            throw new InvalidEmailAlreadyExistException("the given e-mail exists in the database");
+            throw new UserValidationException(UserErrorType.EMAIL_ALREADY_EXISTS, "the given e-mail exists in the database");
         }
         validateNext(userDto);
     }
