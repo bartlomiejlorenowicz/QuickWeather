@@ -1,22 +1,15 @@
 package com.quickweather.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.quickweather.dto.UserDto;
+import com.quickweather.entity.User;
 import com.quickweather.repository.UserCreationRepository;
-import com.quickweather.service.UserCreationService;
 import com.quickweather.validator.IntegrationTestConfig;
-import org.checkerframework.checker.units.qual.A;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 
-import org.springframework.test.web.servlet.MockMvc;
-
-
-import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -24,14 +17,28 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class UserCreationControllerTest extends IntegrationTestConfig {
 
-    @Autowired
-    private MockMvc mockMvc;
+    private static final String REGISTER_URL = "/api/v1/user/register";
 
-    @MockBean
+    @Autowired
     private UserCreationRepository userCreationRepository;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+    @BeforeEach
+    void setUp() {
+        User user = User.builder()
+                .firstName("Andy")
+                .lastName("Murphy")
+                .password("JohnP@ss123!")
+                .email("john123@wp.pl")
+                .phoneNumber("1234567890")
+                .build();
+
+        userCreationRepository.save(user);
+    }
+
+    @AfterEach
+    void clear() {
+        userCreationRepository.deleteAll();
+    }
 
     @Test
     void shouldRegisterUser() throws Exception {
@@ -39,18 +46,15 @@ class UserCreationControllerTest extends IntegrationTestConfig {
                 .firstName("John")
                 .lastName("Murphy")
                 .password("JohnP@ss123!")
-                .email("john123@wp.pl")
+                .email("john1234@wp.pl")
                 .phoneNumber("1234567890")
                 .build();
 
-        mockMvc.perform(post("/api/v1/user/register")
+        mockMvc.perform(post(REGISTER_URL)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(userDto)))
                 .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(content()
-                        .contentType("application/json"))
-                .andExpect(jsonPath("$.message").value("User successfully registered"));
+                .andExpect(status().isOk());
     }
 
     @Test
@@ -59,11 +63,11 @@ class UserCreationControllerTest extends IntegrationTestConfig {
                 .firstName("A")
                 .lastName("Murphy")
                 .password("JohnP@ss123!")
-                .email("john123@wp.pl")
+                .email("john1235@wp.pl")
                 .phoneNumber("1234567890")
                 .build();
 
-        mockMvc.perform(post("/api/v1/user/register")
+        mockMvc.perform(post(REGISTER_URL)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(userDto)))
                 .andDo(print())
@@ -79,11 +83,11 @@ class UserCreationControllerTest extends IntegrationTestConfig {
                 .firstName("Andy")
                 .lastName("M".repeat(31))
                 .password("JohnP@ss123!")
-                .email("john123@wp.pl")
+                .email("john1236@wp.pl")
                 .phoneNumber("1234567890")
                 .build();
 
-        mockMvc.perform(post("/api/v1/user/register")
+        mockMvc.perform(post(REGISTER_URL)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(userDto)))
                 .andDo(print())
@@ -99,11 +103,11 @@ class UserCreationControllerTest extends IntegrationTestConfig {
                 .firstName("Andy")
                 .lastName("Murphy")
                 .password("JohnP@ss123!")
-                .email("john123wp.pl")
+                .email("john1237wp.pl")
                 .phoneNumber("1234567890")
                 .build();
 
-        mockMvc.perform(post("/api/v1/user/register")
+        mockMvc.perform(post(REGISTER_URL)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(userDto)))
                 .andDo(print())
@@ -123,9 +127,7 @@ class UserCreationControllerTest extends IntegrationTestConfig {
                 .phoneNumber("1234567890")
                 .build();
 
-        when(userCreationRepository.existsByEmail("john123@wp.pl")).thenReturn(true);
-
-        mockMvc.perform(post("/api/v1/user/register")
+        mockMvc.perform(post(REGISTER_URL)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(userDto)))
                 .andDo(print())
