@@ -1,6 +1,6 @@
 package com.quickweather.controller;
 
-import com.quickweather.dto.UserDto;
+import com.quickweather.dto.user.UserDto;
 import com.quickweather.entity.User;
 import com.quickweather.repository.UserCreationRepository;
 import com.quickweather.validator.IntegrationTestConfig;
@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 
+import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -55,6 +56,8 @@ class UserCreationControllerTest extends IntegrationTestConfig {
                         .content(objectMapper.writeValueAsString(userDto)))
                 .andDo(print())
                 .andExpect(status().isOk());
+
+        assertTrue(userCreationRepository.findByEmail("john1234@wp.pl").get().isEnabled());
     }
 
     @Test

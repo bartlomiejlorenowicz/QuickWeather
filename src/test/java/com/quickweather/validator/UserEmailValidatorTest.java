@@ -1,6 +1,6 @@
 package com.quickweather.validator;
 
-import com.quickweather.dto.UserDto;
+import com.quickweather.dto.user.UserDto;
 import com.quickweather.exceptions.UserValidationException;
 import com.quickweather.repository.UserCreationRepository;
 import org.junit.jupiter.api.Test;
