@@ -1,6 +1,6 @@
 package com.quickweather.controller;
 
-import com.quickweather.dto.UserDto;
+import com.quickweather.dto.user.UserDto;
 import com.quickweather.service.UserCreationService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

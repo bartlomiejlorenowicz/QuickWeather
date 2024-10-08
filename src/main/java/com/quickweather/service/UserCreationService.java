@@ -1,6 +1,6 @@
 package com.quickweather.service;
 
-import com.quickweather.dto.UserDto;
+import com.quickweather.dto.user.UserDto;
 import com.quickweather.mapper.UserMapper;
 import com.quickweather.repository.UserCreationRepository;
 import com.quickweather.validator.UserValidator;

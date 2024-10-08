@@ -1,7 +1,7 @@
 package com.quickweather.mapper;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.quickweather.dto.UserDto;
+import com.quickweather.dto.user.UserDto;
 import com.quickweather.entity.User;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

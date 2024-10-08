@@ -1,4 +1,4 @@
-package com.quickweather.dto;
+package com.quickweather.dto.user;
 
 import lombok.Builder;
 
