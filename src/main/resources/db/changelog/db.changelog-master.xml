@@ -28,6 +28,14 @@
             </column>
         </createTable>
     </changeSet>
+
+    <changeSet id="Add column is_enabled" author="Bartek">
+        <addColumn tableName="users">
+            <column name="is_enabled" type="boolean" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
     
 
 </databaseChangeLog>
