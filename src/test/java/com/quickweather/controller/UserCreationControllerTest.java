@@ -1,6 +1,6 @@
 package com.quickweather.controller;
 
-import com.quickweather.dto.UserDto;
+import com.quickweather.dto.user.UserDto;
 import com.quickweather.entity.User;
 import com.quickweather.repository.UserCreationRepository;
 import com.quickweather.validator.IntegrationTestConfig;
