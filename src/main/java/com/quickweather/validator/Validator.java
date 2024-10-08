@@ -1,6 +1,6 @@
 package com.quickweather.validator;
 
-import com.quickweather.dto.UserDto;
+import com.quickweather.dto.user.UserDto;
 
 import static java.util.Objects.isNull;
 

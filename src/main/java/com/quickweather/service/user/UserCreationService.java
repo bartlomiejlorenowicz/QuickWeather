@@ -1,6 +1,6 @@
-package com.quickweather.service;
+package com.quickweather.service.user;
 
-import com.quickweather.dto.UserDto;
+import com.quickweather.dto.user.UserDto;
 import com.quickweather.mapper.UserMapper;
 import com.quickweather.repository.UserCreationRepository;
 import com.quickweather.validator.UserValidator;
@@ -11,9 +11,9 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class UserCreationService {
 
-    private UserValidator validator;
-    private UserCreationRepository userCreationRepository;
-    private UserMapper userMapper;
+    private final UserValidator validator;
+    private final UserCreationRepository userCreationRepository;
+    private final UserMapper userMapper;
 
     public UserCreationService(UserValidator validator, UserCreationRepository userCreationRepository, UserMapper userMapper) {
         this.validator = validator;

@@ -1,4 +1,4 @@
-package com.quickweather.dto;
+package com.quickweather.dto.user;
 
 import lombok.Builder;
 
@@ -65,4 +65,5 @@ public class UserDto {
     public void setPhoneNumber(String phoneNumber) {
         this.phoneNumber = phoneNumber;
     }
+
 }

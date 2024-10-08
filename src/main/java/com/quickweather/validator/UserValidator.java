@@ -1,12 +1,9 @@
 package com.quickweather.validator;
 
-import com.quickweather.dto.UserDto;
+import com.quickweather.dto.user.UserDto;
 import com.quickweather.repository.UserCreationRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-
-import java.util.Arrays;
-import java.util.regex.Pattern;
 
 @Component
 @Slf4j
