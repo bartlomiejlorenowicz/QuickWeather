@@ -1,6 +1,6 @@
 package com.quickweather.validator;
 
-import com.quickweather.dto.UserDto;
+import com.quickweather.dto.user.UserDto;
 import com.quickweather.exceptions.UserErrorType;
 import com.quickweather.exceptions.UserValidationException;
 import com.quickweather.repository.UserCreationRepository;
@@ -36,6 +36,7 @@ public class UserEmailValidator extends Validator {
         if (emailExistInDatabase) {
             throw new UserValidationException(UserErrorType.EMAIL_ALREADY_EXISTS, "the given e-mail exists in the database");
         }
+
         validateNext(userDto);
     }
 }
