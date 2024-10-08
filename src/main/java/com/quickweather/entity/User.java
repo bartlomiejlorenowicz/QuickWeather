@@ -31,6 +31,9 @@ public class User {
 
     private String phoneNumber;
 
+    @Column(name = "is_enabled")
+    private boolean isEnabled = true;
+
 
     public String getFirstName() {
         return firstName;
@@ -70,6 +73,14 @@ public class User {
 
     public void setPhoneNumber(String phoneNumber) {
         this.phoneNumber = phoneNumber;
+    }
+
+    public boolean isEnabled() {
+        return isEnabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        isEnabled = enabled;
     }
 
     @Override
