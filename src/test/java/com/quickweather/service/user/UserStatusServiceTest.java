@@ -1,4 +1,4 @@
-package com.quickweather.service;
+package com.quickweather.service.user;
 
 import com.quickweather.dto.user.UserId;
 import com.quickweather.entity.User;
