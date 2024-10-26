@@ -1,6 +1,7 @@
 package com.quickweather.service.accuweather;
 
 import com.quickweather.dto.accuweather.AccuWeatherResponse;
+import com.quickweather.exceptions.WeatherServiceException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -8,7 +9,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
@@ -61,19 +61,19 @@ class AccuWeatherServiceImplTest {
 
         when(restTemplate.getForObject(any(URI.class), Mockito.eq(AccuWeatherResponse[].class))).thenThrow(new HttpClientErrorException(HttpStatus.NOT_FOUND));
 
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> accuWeatherService.getLocationByPostalCode(postalCode));
+        WeatherServiceException exception = assertThrows(WeatherServiceException.class, () -> accuWeatherService.getLocationByPostalCode(postalCode));
 
-        assertTrue(exception.getMessage().contains("Error fetching postal code: " + postalCode));
+        assertTrue(exception.getMessage().contains("Data not found for: " + postalCode));
         assertEquals("NOT_FOUND", mockException.getStatusText());
     }
 
     @Test
-    void testGetLocationByPostalCode_GeneralException() {
+    void testGetLocationByPostalCodeGeneralException() {
 
         when(restTemplate.getForObject(any(URI.class), Mockito.eq(AccuWeatherResponse[].class))).thenThrow(RuntimeException.class);
 
         RuntimeException exception = assertThrows(RuntimeException.class, () -> accuWeatherService.getLocationByPostalCode(postalCode));
 
-        assertTrue(exception.getMessage().contains("Could not fetch postal code for " + postalCode));
+        assertTrue(exception.getMessage().contains("An unknown error occurred while fetching weather data for: " + postalCode));
     }
 }
