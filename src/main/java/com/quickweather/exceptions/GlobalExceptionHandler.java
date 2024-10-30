@@ -1,5 +1,6 @@
 package com.quickweather.exceptions;
 
+import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -38,6 +39,16 @@ public class GlobalExceptionHandler {
 
         HttpStatus status = mapErrorTypeToHttpStatus(ex.getWeatherErrorType());
         return ResponseEntity.status(status).body(response);
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<Map<String, String>> handleValidationException(ConstraintViolationException ex) {
+        Map<String, String> response = new HashMap<>();
+        response.put(MESSAGE, ex.getMessage());
+        response.put(ERROR_TYPE, ex.getMessage());
+        response.put(TIMESTAMP, LocalDateTime.now().toString());
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
     private HttpStatus mapErrorTypeToHttpStatus(WeatherErrorType weatherErrorType) {
