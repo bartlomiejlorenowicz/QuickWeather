@@ -33,11 +33,14 @@ public class OpenWeatherServiceImpl extends WeatherServiceBase implements OpenWe
     @Override
     public WeatherResponse getCurrentWeatherByCity(String city) {
         Map<String, String> queryParams = new HashMap<>();
-        queryParams.put("q", "city");
+        queryParams.put("q", city);
         queryParams.put("appid", apiKey);
-        queryParams.put("unit", "metrics");
+        queryParams.put("units", "metric");
 
         URI url = UriBuilderUtils.buildUri(apiUrl, "weather", queryParams);
+        log.info("execution request with address {}", apiUrl);
+        log.info("with params {}", queryParams);
+
         return fetchWeatherData(url, WeatherResponse.class, city);
     }
 
