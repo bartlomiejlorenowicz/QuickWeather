@@ -1,8 +1,10 @@
 package com.quickweather.exceptions;
 
+import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
@@ -44,8 +46,23 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<Map<String, String>> handleValidationException(ConstraintViolationException ex) {
         Map<String, String> response = new HashMap<>();
-        response.put(MESSAGE, ex.getMessage());
-        response.put(ERROR_TYPE, ex.getMessage());
+
+        String simplifiedMessage = ex.getConstraintViolations().stream()
+                .map(ConstraintViolation::getMessage)
+                .findFirst()
+                .orElse("Validation error");
+
+        response.put(MESSAGE, simplifiedMessage);
+        response.put(ERROR_TYPE, WeatherErrorType.BAD_REQUEST.name());
+        response.put(TIMESTAMP, LocalDateTime.now().toString());
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<Map<String, String>> handleMissingServletRequestParameterException(MissingServletRequestParameterException ex) {
+        Map<String, String> response = new HashMap<>();
+        response.put(MESSAGE, "Required request parameter '" + ex.getParameterName() + "' is missing");
+        response.put(ERROR_TYPE, WeatherErrorType.BAD_REQUEST.name());
         response.put(TIMESTAMP, LocalDateTime.now().toString());
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
