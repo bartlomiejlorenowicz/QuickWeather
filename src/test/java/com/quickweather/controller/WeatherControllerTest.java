@@ -261,4 +261,77 @@ class WeatherControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Longitude must be between -180 and 180"));
     }
+
+    @Test
+    void testGetWeatherForecastByCityAndDays_ShouldReturnCorrect() throws Exception {
+
+        String responseDto = """
+                 {
+                          "city": {
+                              "id": 4517009,
+                              "name": "London",
+                              "country": "US"
+                          },
+                          "list": [
+                              {
+                                  "temp": {
+                                      "day": 20.98,
+                                      "min": 18.5,
+                                      "max": 23.1,
+                                      "night": 17.2,
+                                      "eve": 19.3,
+                                      "morn": 16.8
+                                  },
+                                  "pressure": 1019,
+                                  "humidity": 51,
+                                  "weather": [
+                                      {
+                                          "main": "Clouds",
+                                          "description": "scattered clouds",
+                                          "icon": "03d"
+                                      }
+                                  ]
+                              },
+                              {
+                                  "temp": {
+                                      "day": 21.54,
+                                      "min": 19.2,
+                                      "max": 24.0,
+                                      "night": 18.3,
+                                      "eve": 20.0,
+                                      "morn": 17.5
+                                  },
+                                  "pressure": 1019,
+                                  "humidity": 52,
+                                  "weather": [
+                                      {
+                                          "main": "Clouds",
+                                          "description": "broken clouds",
+                                          "icon": "04d"
+                                      }
+                                  ]
+                              }
+                          ]
+                      }
+                """;
+
+        stubFor(WireMock.get(urlPathEqualTo("/data/2.5/forecast"))
+                .withQueryParam("q", equalTo("London"))
+                .withQueryParam("cnt", equalTo("2"))
+                .withQueryParam("units", equalTo("metric"))
+                .withQueryParam("appid", equalTo(apiKey))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "application/json")
+                        .withBody(responseDto)
+                        .withStatus(200)));
+
+        mockMvc.perform(MockMvcRequestBuilders.get(url + "/forecast/daily")
+                        .param("city", "London")
+                        .param("cnt", "2")
+                        .param("units", "metric")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.list[0].temp.day").value(20.98))
+                .andExpect(jsonPath("$.list[1].temp.day").value(21.54));
+    }
 }
