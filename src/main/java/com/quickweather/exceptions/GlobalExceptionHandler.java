@@ -7,10 +7,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
@@ -58,6 +60,7 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
+
     @ExceptionHandler(MissingServletRequestParameterException.class)
     public ResponseEntity<Map<String, String>> handleMissingServletRequestParameterException(MissingServletRequestParameterException ex) {
         Map<String, String> response = new HashMap<>();
@@ -67,6 +70,23 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<Map<String, String>> handleMethodArgumentTypeMismatchException(MethodArgumentTypeMismatchException ex) {
+        Map<String, String> response = new HashMap<>();
+        String paramName = Optional.of(ex.getName()).orElse("unknown");
+        String paramType = Optional.ofNullable(ex.getRequiredType())
+                .map(Class::getSimpleName)
+                .orElse("unknown");
+
+        response.put(MESSAGE, "Failed to convert value of parameter '" + paramName + "' to required type '" + paramType + "'");
+
+        response.put(ERROR_TYPE, WeatherErrorType.BAD_REQUEST.name());
+        response.put(TIMESTAMP, LocalDateTime.now().toString());
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
 
     private HttpStatus mapErrorTypeToHttpStatus(WeatherErrorType weatherErrorType) {
 
@@ -79,5 +99,4 @@ public class GlobalExceptionHandler {
             default -> HttpStatus.INTERNAL_SERVER_ERROR;
         };
     }
-
 }
