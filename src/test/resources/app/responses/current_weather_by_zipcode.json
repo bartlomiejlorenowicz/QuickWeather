@@ -1,0 +1,10 @@
+{
+  "sys": {
+    "country": "PL"
+  },
+  "weather": [
+    {
+      "description": "clear sky"
+    }
+  ]
+}
