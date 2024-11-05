@@ -17,9 +17,9 @@ import java.util.Optional;
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
-    public static final String MESSAGE = "message";
-    public static final String ERROR_TYPE = "errorType";
-    public static final String TIMESTAMP = "timestamp";
+    private static final String MESSAGE = "message";
+    private static final String ERROR_TYPE = "errorType";
+    private static final String TIMESTAMP = "timestamp";
 
     @ExceptionHandler(UserValidationException.class)
     public ResponseEntity<Map<String, String>> handlerUserValidationException(UserValidationException ex) {
@@ -80,13 +80,11 @@ public class GlobalExceptionHandler {
                 .orElse("unknown");
 
         response.put(MESSAGE, "Failed to convert value of parameter '" + paramName + "' to required type '" + paramType + "'");
-
         response.put(ERROR_TYPE, WeatherErrorType.BAD_REQUEST.name());
         response.put(TIMESTAMP, LocalDateTime.now().toString());
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
-
 
     private HttpStatus mapErrorTypeToHttpStatus(WeatherErrorType weatherErrorType) {
 
