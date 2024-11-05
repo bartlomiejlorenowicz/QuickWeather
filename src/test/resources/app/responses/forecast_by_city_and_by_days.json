@@ -1,0 +1,47 @@
+{
+  "city": {
+    "id": 4517009,
+    "name": "London",
+    "country": "US"
+  },
+  "list": [
+    {
+      "temp": {
+        "day": 20.98,
+        "min": 18.5,
+        "max": 23.1,
+        "night": 17.2,
+        "eve": 19.3,
+        "morn": 16.8
+      },
+      "pressure": 1019,
+      "humidity": 51,
+      "weather": [
+        {
+          "main": "Clouds",
+          "description": "scattered clouds",
+          "icon": "03d"
+        }
+      ]
+    },
+    {
+      "temp": {
+        "day": 21.54,
+        "min": 19.2,
+        "max": 24.0,
+        "night": 18.3,
+        "eve": 20.0,
+        "morn": 17.5
+      },
+      "pressure": 1019,
+      "humidity": 52,
+      "weather": [
+        {
+          "main": "Clouds",
+          "description": "broken clouds",
+          "icon": "04d"
+        }
+      ]
+    }
+  ]
+}
