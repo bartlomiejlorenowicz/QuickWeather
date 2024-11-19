@@ -2,7 +2,7 @@ package com.quickweather.controller;
 
 import com.quickweather.dto.accuweather.AccuWeatherDailyResponse;
 import com.quickweather.dto.accuweather.AccuWeatherResponse;
-import com.quickweather.dto.accuweather.CustomWeatherResponseDto;
+import com.quickweather.dto.accuweather.AccuWeatherDailyDto;
 import com.quickweather.dto.airpollution.AirPollutionResponseDto;
 import com.quickweather.dto.forecast.HourlyForecastResponseDto;
 import com.quickweather.dto.forecast.WeatherForecastDailyResponseDto;
@@ -78,7 +78,7 @@ public class WeatherController {
     }
 
     @GetMapping("/accuweather/forecast/daily/1day")
-    public CustomWeatherResponseDto getCustomAccuWeatherForecast(
+    public AccuWeatherDailyDto getCustomAccuWeatherForecast(
             @RequestParam @NotBlank(message = "City name cannot be blank") String city) {
 
         try {
@@ -97,8 +97,5 @@ public class WeatherController {
             throw e;
         }
     }
-
-
-
 
 }

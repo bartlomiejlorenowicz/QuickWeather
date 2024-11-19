@@ -1,6 +1,6 @@
 package com.quickweather.service.accuweather;
 
-import com.quickweather.dto.accuweather.AccuWeatherDailyDto;
+import com.quickweather.dto.accuweather.AccuWeatherDailyDtos;
 import com.quickweather.dto.accuweather.AccuWeatherDailyResponse;
 import com.quickweather.dto.accuweather.AccuWeatherResponse;
 import com.quickweather.service.weatherbase.WeatherServiceBase;
@@ -54,7 +54,7 @@ public class AccuWeatherServiceImpl extends WeatherServiceBase implements AccuWe
         return Arrays.asList(responses);
     }
 
-    public AccuWeatherDailyDto getLocationKeyByCity(String city) {
+    public AccuWeatherDailyDtos getLocationKeyByCity(String city) {
         Map<String, String> queryParams = new HashMap<>();
         queryParams.put("apikey", apiKey);
         queryParams.put("q", city);
@@ -62,7 +62,7 @@ public class AccuWeatherServiceImpl extends WeatherServiceBase implements AccuWe
         URI url = UriBuilderUtils.buildUri(apiUrl, "/locations/v1/cities/search", queryParams);
         log.info("Pobieranie Location Key dla miasta: {}", city);
 
-        AccuWeatherDailyDto[] response = restTemplate.getForObject(url, AccuWeatherDailyDto[].class);
+        AccuWeatherDailyDtos[] response = restTemplate.getForObject(url, AccuWeatherDailyDtos[].class);
         if (response != null && response.length > 0) {
             return response[0];
         } else {
