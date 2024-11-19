@@ -23,7 +23,14 @@ public class User {
     private Long id;
 
     @Column(name = "uuid")
-    private UUID uuid = UUID.randomUUID();
+    private UUID uuid;
+
+    @PrePersist
+    public void prePersist() {
+        if (uuid == null) {
+            uuid = UUID.randomUUID();
+        }
+    }
 
     private String firstName;
 
