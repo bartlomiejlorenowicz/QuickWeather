@@ -1,9 +1,12 @@
 package com.quickweather.controller;
 
+import com.quickweather.dto.accuweather.AccuWeatherDailyResponse;
 import com.quickweather.dto.accuweather.AccuWeatherResponse;
+import com.quickweather.dto.accuweather.CustomWeatherResponseDto;
 import com.quickweather.dto.airpollution.AirPollutionResponseDto;
 import com.quickweather.dto.forecast.HourlyForecastResponseDto;
 import com.quickweather.dto.forecast.WeatherForecastDailyResponseDto;
+import com.quickweather.dto.mapper.AccuWeatherMapper;
 import com.quickweather.dto.weather.WeatherResponse;
 import com.quickweather.dto.zipcode.WeatherByZipCodeResponseDto;
 import com.quickweather.service.accuweather.AccuWeatherServiceImpl;
@@ -32,16 +35,10 @@ public class WeatherController {
     }
 
     @GetMapping("/city")
-    public WeatherResponse getCurrentWeather(
+    public WeatherResponse getCurrentWeatherByCity(
             @RequestParam
             @NotBlank(message = "City name cannot be blank") String city) {
         return currentWeatherService.getCurrentWeatherByCity(city);
-    }
-
-    @GetMapping("/postcode")
-    public List<AccuWeatherResponse> getLocationByPostalCode(
-            @RequestParam String postcode) {
-        return accuWeatherService.getLocationByPostalCode(postcode);
     }
 
     @GetMapping("/zipcode")
@@ -73,4 +70,35 @@ public class WeatherController {
             @Max(value = 16, message = "Count cannot be more than 16") int cnt) {
         return currentWeatherService.getWeatherForecastByCityAndDays(city, cnt);
     }
+
+    @GetMapping("/postcode")
+    public List<AccuWeatherResponse> getLocationByPostalCode(
+            @RequestParam String postcode) {
+        return accuWeatherService.getLocationByPostalCode(postcode);
+    }
+
+    @GetMapping("/accuweather/forecast/daily/1day")
+    public CustomWeatherResponseDto getCustomAccuWeatherForecast(
+            @RequestParam @NotBlank(message = "City name cannot be blank") String city) {
+
+        try {
+            AccuWeatherResponse locationResponse = accuWeatherService.getLocationByCity(city)
+                    .stream()
+                    .findFirst()
+                    .orElseThrow(() -> new RuntimeException("No location found for the city: " + city));
+
+            String locationKey = locationResponse.getKey();
+
+            AccuWeatherDailyResponse forecastResponse = accuWeatherService.getDailyForecastByLocationKey(locationKey);
+
+            return AccuWeatherMapper.mapToCustomWeatherResponseDto(forecastResponse);
+
+        } catch (RuntimeException e) {
+            throw e;
+        }
+    }
+
+
+
+
 }
