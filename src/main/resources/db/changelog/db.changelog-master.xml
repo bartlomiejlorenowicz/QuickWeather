@@ -36,6 +36,18 @@
             </column>
         </addColumn>
     </changeSet>
+
+    <changeSet id="Add UUID column" author="Bartek">
+        <addColumn tableName="users">
+            <column name="uuid" type="uuid"/>
+        </addColumn>
+
+        <update tableName="users">
+            <column name="uuid" valueComputed="gen_random_uuid()"/>
+        </update>
+
+        <addNotNullConstraint tableName="users" columnName="uuid" columnDataType="uuid"/>
+    </changeSet>
     
 
 </databaseChangeLog>
