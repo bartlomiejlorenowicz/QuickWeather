@@ -10,10 +10,10 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
-import java.lang.reflect.Field;
 import java.net.URI;
 import java.util.List;
 
@@ -30,17 +30,14 @@ class AccuWeatherServiceImplTest {
     @InjectMocks
     private AccuWeatherServiceImpl accuWeatherService;
 
-    private final String postalCode = "37-203";
+    private static final String POSTAL_CODE = "37-203";
+    private static final String TEST_API_KEY = "test-api-key";
+    private static final String API_URL = "https://dataservice.accuweather.com/locations/v1/postalcodes/search";
 
     @BeforeEach
-    void setUp() throws NoSuchFieldException, IllegalAccessException {
-        Field apiKey = AccuWeatherServiceImpl.class.getDeclaredField("apiKey");
-        apiKey.setAccessible(true);
-        apiKey.set(accuWeatherService, "test-api-key");
-
-        Field apiUrl = AccuWeatherServiceImpl.class.getDeclaredField("apiUrlPostalCode");
-        apiUrl.setAccessible(true);
-        apiUrl.set(accuWeatherService, "https://dataservice.accuweather.com/locations/v1/postalcodes/search");
+    void setUp() {
+        ReflectionTestUtils.setField(accuWeatherService, "apiKey", TEST_API_KEY);
+        ReflectionTestUtils.setField(accuWeatherService, "apiUrl", API_URL);
     }
 
     @Test
@@ -49,7 +46,7 @@ class AccuWeatherServiceImplTest {
 
         when(restTemplate.getForObject(any(URI.class), Mockito.eq(AccuWeatherResponse[].class))).thenReturn(mockAccuWeatherResponse);
 
-        List<AccuWeatherResponse> result = accuWeatherService.getLocationByPostalCode(postalCode);
+        List<AccuWeatherResponse> result = accuWeatherService.getLocationByPostalCode(POSTAL_CODE);
 
         assertNotNull(result);
         assertEquals(1, result.size());
@@ -61,9 +58,9 @@ class AccuWeatherServiceImplTest {
 
         when(restTemplate.getForObject(any(URI.class), Mockito.eq(AccuWeatherResponse[].class))).thenThrow(new HttpClientErrorException(HttpStatus.NOT_FOUND));
 
-        WeatherServiceException exception = assertThrows(WeatherServiceException.class, () -> accuWeatherService.getLocationByPostalCode(postalCode));
+        WeatherServiceException exception = assertThrows(WeatherServiceException.class, () -> accuWeatherService.getLocationByPostalCode(POSTAL_CODE));
 
-        assertTrue(exception.getMessage().contains("Data not found for: " + postalCode));
+        assertTrue(exception.getMessage().contains("Data not found for: " + POSTAL_CODE));
         assertEquals("NOT_FOUND", mockException.getStatusText());
     }
 
@@ -72,8 +69,8 @@ class AccuWeatherServiceImplTest {
 
         when(restTemplate.getForObject(any(URI.class), Mockito.eq(AccuWeatherResponse[].class))).thenThrow(RuntimeException.class);
 
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> accuWeatherService.getLocationByPostalCode(postalCode));
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> accuWeatherService.getLocationByPostalCode(POSTAL_CODE));
 
-        assertTrue(exception.getMessage().contains("An unknown error occurred while fetching weather data for: " + postalCode));
+        assertTrue(exception.getMessage().contains("An unknown error occurred while fetching weather data for: " + POSTAL_CODE));
     }
 }

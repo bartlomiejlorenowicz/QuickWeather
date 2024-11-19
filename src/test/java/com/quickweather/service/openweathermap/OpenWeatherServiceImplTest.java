@@ -13,10 +13,10 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
-import java.lang.reflect.Field;
 import java.net.URI;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -32,18 +32,16 @@ class OpenWeatherServiceImplTest {
     @InjectMocks
     private OpenWeatherServiceImpl currentWeatherService;
 
-    private final String city = "London";
+    private static final String CITY = "London";
+    private static final String ZIPCODE = "37-203";
+    private static final String COUNTRY_CODE = "pl";
+    private static final String TEST_API_KEY = "test-api-key";
+    private static final String API_URL = "https://api.openweathermap.org/data/2.5/";
 
     @BeforeEach
-    void setUp() throws NoSuchFieldException, IllegalAccessException {
-        currentWeatherService = new OpenWeatherServiceImpl(restTemplate);
-        Field apiKey = OpenWeatherServiceImpl.class.getDeclaredField("apiKey");
-        apiKey.setAccessible(true);
-        apiKey.set(currentWeatherService, "test-api-key");
-
-        Field apiUrl = OpenWeatherServiceImpl.class.getDeclaredField("apiUrl");
-        apiUrl.setAccessible(true);
-        apiUrl.set(currentWeatherService, "https://api.openweathermap.org/data/2.5/");
+    void setUp(){
+        ReflectionTestUtils.setField(currentWeatherService, "apiKey", TEST_API_KEY);
+        ReflectionTestUtils.setField(currentWeatherService, "apiUrl", API_URL);
     }
 
     @Test
@@ -52,7 +50,7 @@ class OpenWeatherServiceImplTest {
 
         when(restTemplate.getForObject(any(URI.class), Mockito.eq(WeatherResponse.class))).thenReturn(mockWeatherResponse);
 
-        WeatherResponse result = currentWeatherService.getCurrentWeatherByCity(city);
+        WeatherResponse result = currentWeatherService.getCurrentWeatherByCity(CITY);
 
         assertEquals(mockWeatherResponse, result);
     }
@@ -63,9 +61,9 @@ class OpenWeatherServiceImplTest {
         when(restTemplate.getForObject(any(URI.class), Mockito.eq(WeatherResponse.class)))
                 .thenThrow(new HttpClientErrorException(HttpStatus.NOT_FOUND));
 
-        WeatherServiceException exception = assertThrows(WeatherServiceException.class, () -> currentWeatherService.getCurrentWeatherByCity(city));
+        WeatherServiceException exception = assertThrows(WeatherServiceException.class, () -> currentWeatherService.getCurrentWeatherByCity(CITY));
 
-        assertEquals("Data not found for: " + city, exception.getMessage());
+        assertEquals("Data not found for: " + CITY, exception.getMessage());
     }
 
     @Test
@@ -75,23 +73,21 @@ class OpenWeatherServiceImplTest {
                 .thenThrow(new RuntimeException("General exception"));
 
         WeatherServiceException exception = assertThrows(WeatherServiceException.class, () -> {
-            currentWeatherService.getCurrentWeatherByCity(city);
+            currentWeatherService.getCurrentWeatherByCity(CITY);
         });
 
-        assertEquals("An unknown error occurred while fetching weather data for: " + city, exception.getMessage());
+        assertEquals("An unknown error occurred while fetching weather data for: " + CITY, exception.getMessage());
     }
 
     @Test
     void testGetCurrentWeatherByZipcodeShouldReturnCorrect() {
 
-        String zipcode = "37-203";
-        String countryCode = "pl";
         WeatherByZipCodeResponseDto mockWeather = new WeatherByZipCodeResponseDto();
 
         when(restTemplate.getForObject(any(URI.class), Mockito.eq(WeatherByZipCodeResponseDto.class)))
                 .thenReturn(mockWeather);
 
-        WeatherByZipCodeResponseDto result = currentWeatherService.getCurrentWeatherByZipcode(zipcode, countryCode);
+        WeatherByZipCodeResponseDto result = currentWeatherService.getCurrentWeatherByZipcode(ZIPCODE, COUNTRY_CODE);
 
         assertEquals(mockWeather, result);
     }
@@ -99,15 +95,12 @@ class OpenWeatherServiceImplTest {
     @Test
     void testGetCurrentWeatherByZipcodeGeneratedUri() {
 
-        String zipcode = "37-203";
-        String countryCode = "pl";
-
-        currentWeatherService.getCurrentWeatherByZipcode(zipcode, countryCode);
+        currentWeatherService.getCurrentWeatherByZipcode(ZIPCODE, COUNTRY_CODE);
 
         Mockito.verify(restTemplate).getForObject(Mockito.argThat(argument -> {
             URI uri = argument;
-            return uri.toString().contains("zip=37-203,pl")
-                    && uri.toString().contains("appid=test-api-key")
+            return uri.toString().contains("zip=" + ZIPCODE + "," + COUNTRY_CODE)
+                    && uri.toString().contains("appid=" + TEST_API_KEY)
                     && uri.toString().contains("lang=pl");
         }), Mockito.eq(WeatherByZipCodeResponseDto.class));
     }
@@ -115,29 +108,23 @@ class OpenWeatherServiceImplTest {
     @Test
     void testHttpClientErrorNotFoundExceptionForZipcode() {
 
-        String zipcode = "37-203";
-        String countryCode = "pl";
-
         when(restTemplate.getForObject(any(URI.class), Mockito.eq(WeatherByZipCodeResponseDto.class)))
                 .thenThrow(new HttpClientErrorException(HttpStatus.NOT_FOUND));
 
-        RuntimeException exception = assertThrows(WeatherServiceException.class, () -> currentWeatherService.getCurrentWeatherByZipcode(zipcode, countryCode));
+        RuntimeException exception = assertThrows(WeatherServiceException.class, () -> currentWeatherService.getCurrentWeatherByZipcode(ZIPCODE, COUNTRY_CODE));
 
-        assertEquals("Data not found for: " + zipcode + "," + countryCode, exception.getMessage());
+        assertEquals("Data not found for: " + ZIPCODE + "," + COUNTRY_CODE, exception.getMessage());
     }
 
     @Test
     void testGeneralExceptionForZipcode() {
 
-        String zipcode = "37-203";
-        String countryCode = "pl";
-
         when(restTemplate.getForObject(any(URI.class), Mockito.eq(WeatherByZipCodeResponseDto.class)))
                 .thenThrow(new WeatherServiceException(WeatherErrorType.UNKNOWN_ERROR, "General error"));
 
-        RuntimeException exception = assertThrows(WeatherServiceException.class, () -> currentWeatherService.getCurrentWeatherByZipcode(zipcode, countryCode));
+        RuntimeException exception = assertThrows(WeatherServiceException.class, () -> currentWeatherService.getCurrentWeatherByZipcode(ZIPCODE, COUNTRY_CODE));
 
-        assertEquals("An unknown error occurred while fetching weather data for: " + zipcode + "," + countryCode, exception.getMessage());
+        assertEquals("An unknown error occurred while fetching weather data for: " + ZIPCODE + "," + COUNTRY_CODE, exception.getMessage());
     }
 
     @Test
@@ -148,7 +135,7 @@ class OpenWeatherServiceImplTest {
         when(restTemplate.getForObject(any(URI.class), Mockito.eq(HourlyForecastResponseDto.class)))
                 .thenReturn(mockForecast);
 
-        HourlyForecastResponseDto result = currentWeatherService.get5DaysForecastEvery3Hours(city);
+        HourlyForecastResponseDto result = currentWeatherService.get5DaysForecastEvery3Hours(CITY);
 
         assertEquals(mockForecast, result);
     }
@@ -159,9 +146,9 @@ class OpenWeatherServiceImplTest {
         when(restTemplate.getForObject(any(URI.class), Mockito.eq(HourlyForecastResponseDto.class)))
                 .thenThrow(new HttpClientErrorException(HttpStatus.NOT_FOUND));
 
-        WeatherServiceException exception = assertThrows(WeatherServiceException.class, () -> currentWeatherService.get5DaysForecastEvery3Hours(city));
+        WeatherServiceException exception = assertThrows(WeatherServiceException.class, () -> currentWeatherService.get5DaysForecastEvery3Hours(CITY));
 
-        assertEquals("Data not found for: " + city, exception.getMessage());
+        assertEquals("Data not found for: " + CITY, exception.getMessage());
     }
 
     @Test
@@ -170,8 +157,8 @@ class OpenWeatherServiceImplTest {
         when(restTemplate.getForObject(any(URI.class), Mockito.eq(HourlyForecastResponseDto.class)))
                 .thenThrow(new RuntimeException("General error"));
 
-        WeatherServiceException exception = assertThrows(WeatherServiceException.class, () -> currentWeatherService.get5DaysForecastEvery3Hours(city));
+        WeatherServiceException exception = assertThrows(WeatherServiceException.class, () -> currentWeatherService.get5DaysForecastEvery3Hours(CITY));
 
-        assertEquals("An unknown error occurred while fetching weather data for: " + city, exception.getMessage());
+        assertEquals("An unknown error occurred while fetching weather data for: " + CITY, exception.getMessage());
     }
 }

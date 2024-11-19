@@ -9,6 +9,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 
+import java.util.UUID;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -32,6 +34,7 @@ class UserAccountStatusControllerIntegrationTest extends IntegrationTestConfig {
                 .password("password")
                 .isEnabled(false)
                 .phoneNumber("1234567890")
+                .uuid(UUID.randomUUID())
                 .build();
 
         user = userCreationRepository.save(user);
@@ -53,6 +56,7 @@ class UserAccountStatusControllerIntegrationTest extends IntegrationTestConfig {
                 .password("password")
                 .isEnabled(true)
                 .phoneNumber("1234567890")
+                .uuid(UUID.randomUUID())
                 .build();
 
         user = userCreationRepository.save(user);

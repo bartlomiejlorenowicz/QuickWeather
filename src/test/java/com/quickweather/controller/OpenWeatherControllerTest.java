@@ -20,16 +20,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WireMockTest(httpPort = 8081)
 @ActiveProfiles("test")
-class WeatherControllerTest extends IntegrationTestConfig {
+class OpenWeatherControllerTest extends IntegrationTestConfig {
 
     @Autowired
     private MockMvc mockMvc;
 
     @Value("${open.weather.api.key}")
     private String apiKey;
-
-    @Value("${open.weather.api.url}")
-    private String weatherApiUrl;
 
     private final String url = "/api/weather";
 
