@@ -5,8 +5,8 @@ import java.util.stream.Collectors;
 
 public class AccuWeatherMapper {
 
-    public static CustomWeatherResponseDto mapToCustomWeatherResponseDto(AccuWeatherDailyResponse response) {
-        CustomWeatherResponseDto customResponse = new CustomWeatherResponseDto();
+    public static AccuWeatherDailyDto mapToCustomWeatherResponseDto(AccuWeatherDailyResponse response) {
+        AccuWeatherDailyDto customResponse = new AccuWeatherDailyDto();
 
         if (response.getHeadline() != null) {
             customResponse.setHeadlineText(response.getHeadline().getText());
