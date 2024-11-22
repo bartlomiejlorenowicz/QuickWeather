@@ -93,7 +93,7 @@ public class GlobalExceptionHandler {
             case DATA_NOT_FOUND -> HttpStatus.NOT_FOUND;
             case WEATHER_DATA_UNAVAILABLE -> HttpStatus.SERVICE_UNAVAILABLE;
             case EXTERNAL_API_ERROR -> HttpStatus.BAD_GATEWAY;
-            case INVALID_COORDINATES, INVALID_CITY_NAME, INVALID_ZIP_CODE -> HttpStatus.BAD_REQUEST;
+            case INVALID_COORDINATES, INVALID_CITY_NAME, INVALID_ZIP_CODE, SERIALIZATION_ERROR-> HttpStatus.BAD_REQUEST;
             default -> HttpStatus.INTERNAL_SERVER_ERROR;
         };
     }
