@@ -6,6 +6,8 @@ import com.quickweather.entity.User;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.UUID;
+
 @Slf4j
 @Component
 public class UserMapper {
@@ -18,7 +20,9 @@ public class UserMapper {
 
     public User toEntity(UserDto userDto) {
         log.info("starting mapping user " + userDto.getEmail());
-        return objectMapper.convertValue(userDto, User.class);
+        User user = objectMapper.convertValue(userDto, User.class);
+        user.setUuid(UUID.randomUUID());
+        return user;
     }
 
 }
