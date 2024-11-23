@@ -76,10 +76,12 @@
     </changeSet>
 
     <changeSet id="rename-column-apisource" author="Bartek">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="weather_api_responses" columnName="apiSource"/>
+        </preConditions>
         <renameColumn tableName="weather_api_responses"
                       oldColumnName="apiSource"
-                      newColumnName="api_source"
-                      columnDataType="VARCHAR(50)"/>
+                      newColumnName="api_source" />
     </changeSet>
 
     <changeSet id="add-auto-increment-to-weather-api-responses-id" author="Bartek">
@@ -123,6 +125,21 @@
                     CHECK (api_source IN ('OPEN_WEATHER', 'ACCU_WEATHER'));
         </sql>
     </changeSet>
+
+    <changeSet id="add-weather-api-responses-history" author="Bartek">
+        <createTable tableName="weather_api_responses_history">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="city" type="VARCHAR(255)"/>
+            <column name="country_code" type="VARCHAR(2)"/>
+            <column name="api_source" type="VARCHAR(255)"/>
+            <column name="response_json" type="JSON"/>
+            <column name="created_at" type="TIMESTAMP"/>
+            <column name="archived_at" type="TIMESTAMP"/>
+        </createTable>
+    </changeSet>
+
 
 
 </databaseChangeLog>

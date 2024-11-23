@@ -1,6 +1,5 @@
 package com.quickweather.service.openweathermap;
 
-import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.quickweather.dto.airpollution.AirPollutionResponseDto;
@@ -16,14 +15,13 @@ import com.quickweather.service.weatherbase.WeatherServiceBase;
 import com.quickweather.utils.UriBuilderUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import java.io.IOException;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 @Slf4j
 @Service
@@ -45,21 +43,9 @@ public class OpenWeatherServiceImpl extends WeatherServiceBase implements OpenWe
         super(restTemplate, weatherApiResponseRepository, objectMapper);
     }
 
+    @Cacheable(value = "weatherData", key = "#city", unless = "#result == null")
     @Override
     public WeatherResponse getCurrentWeatherByCity(String city) {
-
-        //sprawdzanie cache
-        Optional<Object> cacheResponse = getCacheWeatherResponse(city, ApiSource.OPEN_WEATHER);
-        if (cacheResponse.isPresent()) {
-            try {
-                String cachedJson = objectMapper.writeValueAsString(cacheResponse.get());
-                //deserializacja JSON z cache na WeatherResponse
-                return objectMapper.readValue(cachedJson, WeatherResponse.class);
-            } catch (JsonProcessingException e) {
-                log.error("Failed to deserialize cached weather data for city {}: {}", city, e.getMessage());
-                throw new WeatherServiceException(WeatherErrorType.SERIALIZATION_ERROR, "Failed to deserialize cached weather data for: " + city);
-            }
-        }
 
         Map<String, String> queryParams = new HashMap<>();
         queryParams.put(PARAM_QUERY, city);
@@ -74,7 +60,7 @@ public class OpenWeatherServiceImpl extends WeatherServiceBase implements OpenWe
 
         try {
            String responseJson = objectMapper.writeValueAsString(response);
-           //zapis do cache
+
            saveWeatherResponse(city, null, ApiSource.OPEN_WEATHER, responseJson);
         } catch (JsonProcessingException e) {
             log.error("Failed to serialize weather data for city {}: {}", city, e.getMessage());
