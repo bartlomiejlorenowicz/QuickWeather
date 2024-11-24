@@ -25,13 +25,6 @@ public class User {
     @Column(name = "uuid")
     private UUID uuid;
 
-    @PrePersist
-    public void prePersist() {
-        if (uuid == null) {
-            uuid = UUID.randomUUID();
-        }
-    }
-
     private String firstName;
 
     private String lastName;

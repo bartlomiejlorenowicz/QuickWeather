@@ -1,4 +1,5 @@
-<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
     <changeSet id="1" author="Bartek">
@@ -9,7 +10,7 @@
         </preConditions>
         <createTable tableName="users">
             <column name="id" type="bigint" autoIncrement="true">
-            <constraints primaryKey="true" nullable="false"/>
+                <constraints primaryKey="true" nullable="false"/>
             </column>
             <column name="first_name" type="varchar(255)">
                 <constraints nullable="false"/>
@@ -48,6 +49,97 @@
 
         <addNotNullConstraint tableName="users" columnName="uuid" columnDataType="uuid"/>
     </changeSet>
-    
+
+    <changeSet id="create-weather-api-responses" author="Bartek">
+        <createTable tableName="weather_api_responses">
+            <column name="id" type="bigint">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="city" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="country_code" type="VARCHAR(2)"/>
+            <column name="api_source" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="response_json" type="JSON">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
+        </createTable>
+
+        <sql>
+            ALTER TABLE weather_api_responses
+                ADD CONSTRAINT check_apiSource
+                    CHECK ('api_source' IN ('OpenWeather', 'AccuWeather'));
+        </sql>
+    </changeSet>
+
+    <changeSet id="rename-column-apisource" author="Bartek">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="weather_api_responses" columnName="apiSource"/>
+        </preConditions>
+        <renameColumn tableName="weather_api_responses"
+                      oldColumnName="apiSource"
+                      newColumnName="api_source" />
+    </changeSet>
+
+    <changeSet id="add-auto-increment-to-weather-api-responses-id" author="Bartek">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="weather_api_responses"/>
+                <columnExists tableName="weather_api_responses" columnName="id"/>
+            </and>
+        </preConditions>
+        <sql>
+            CREATE SEQUENCE IF NOT EXISTS weather_api_responses_id_seq;
+        </sql>
+        <sql>
+            ALTER TABLE weather_api_responses
+                ALTER COLUMN id SET DEFAULT nextval('weather_api_responses_id_seq');
+        </sql>
+    </changeSet>
+
+    <changeSet id="update-check-constraint-apisource" author="Bartek">
+        <sql>
+            ALTER TABLE weather_api_responses DROP CONSTRAINT check_apiSource;
+        </sql>
+        <sql>
+            ALTER TABLE weather_api_responses
+                ADD CONSTRAINT check_apiSource
+                    CHECK (LOWER(api_source) IN ('openweather', 'accuweather'));
+        </sql>
+    </changeSet>
+
+    <changeSet id="update-apiSource-enum" author="yourname">
+        <modifyDataType tableName="weather_api_responses" columnName="api_source" newDataType="VARCHAR(255)" />
+    </changeSet>
+
+    <changeSet id="update-check-constraint-apisource-update" author="Bartek">
+        <sql>
+            ALTER TABLE weather_api_responses DROP CONSTRAINT check_apiSource;
+        </sql>
+        <sql>
+            ALTER TABLE weather_api_responses
+                ADD CONSTRAINT check_apiSource
+                    CHECK (api_source IN ('OPEN_WEATHER', 'ACCU_WEATHER'));
+        </sql>
+    </changeSet>
+
+    <changeSet id="add-weather-api-responses-history" author="Bartek">
+        <createTable tableName="weather_api_responses_history">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="city" type="VARCHAR(255)"/>
+            <column name="country_code" type="VARCHAR(2)"/>
+            <column name="api_source" type="VARCHAR(255)"/>
+            <column name="response_json" type="JSON"/>
+            <column name="created_at" type="TIMESTAMP"/>
+            <column name="archived_at" type="TIMESTAMP"/>
+        </createTable>
+    </changeSet>
+
+
 
 </databaseChangeLog>
