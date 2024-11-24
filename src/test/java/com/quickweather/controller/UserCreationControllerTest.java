@@ -5,10 +5,13 @@ import com.quickweather.entity.User;
 import com.quickweather.repository.UserCreationRepository;
 import com.quickweather.validator.IntegrationTestConfig;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+
+import java.util.UUID;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -30,6 +33,7 @@ class UserCreationControllerTest extends IntegrationTestConfig {
                 .password("JohnP@ss123!")
                 .email("john123@wp.pl")
                 .phoneNumber("1234567890")
+                .uuid(UUID.randomUUID())
                 .build();
 
         userCreationRepository.save(user);
@@ -55,6 +59,10 @@ class UserCreationControllerTest extends IntegrationTestConfig {
                         .content(objectMapper.writeValueAsString(userDto)))
                 .andDo(print())
                 .andExpect(status().isOk());
+
+        User user = userCreationRepository.findByEmail(userDto.getEmail()).get();
+        Assertions.assertNotNull(user.getUuid());
+
     }
 
     @Test
