@@ -1,8 +1,10 @@
 package com.quickweather.service.accuweather;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.quickweather.dto.accuweather.AccuWeatherDailyDtos;
 import com.quickweather.dto.accuweather.AccuWeatherDailyResponse;
 import com.quickweather.dto.accuweather.AccuWeatherResponse;
+import com.quickweather.repository.WeatherApiResponseRepository;
 import com.quickweather.service.weatherbase.WeatherServiceBase;
 import com.quickweather.utils.UriBuilderUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -26,8 +28,11 @@ public class AccuWeatherServiceImpl extends WeatherServiceBase implements AccuWe
     @Value("${accuweather.weather.api.url}")
     private String apiUrl;
 
-    public AccuWeatherServiceImpl(RestTemplate restTemplate) {
-        super(restTemplate);
+    public AccuWeatherServiceImpl(
+            RestTemplate restTemplate,
+            WeatherApiResponseRepository weatherApiResponseRepository,
+            ObjectMapper objectMapper) {
+        super(restTemplate, weatherApiResponseRepository, objectMapper);
     }
 
     @Override
