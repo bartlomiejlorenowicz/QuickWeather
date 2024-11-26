@@ -1,6 +1,7 @@
 package com.quickweather.service.openweathermap;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.quickweather.dto.airpollution.AirPollutionResponseDto;
 import com.quickweather.dto.forecast.HourlyForecastResponseDto;
@@ -8,6 +9,7 @@ import com.quickweather.dto.forecast.WeatherForecastDailyResponseDto;
 import com.quickweather.dto.weather.WeatherResponse;
 import com.quickweather.dto.zipcode.WeatherByZipCodeResponseDto;
 import com.quickweather.entity.ApiSource;
+import com.quickweather.entity.WeatherApiResponse;
 import com.quickweather.exceptions.WeatherErrorType;
 import com.quickweather.exceptions.WeatherServiceException;
 import com.quickweather.repository.WeatherApiResponseRepository;
@@ -15,13 +17,13 @@ import com.quickweather.service.weatherbase.WeatherServiceBase;
 import com.quickweather.utils.UriBuilderUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -43,10 +45,24 @@ public class OpenWeatherServiceImpl extends WeatherServiceBase implements OpenWe
         super(restTemplate, weatherApiResponseRepository, objectMapper);
     }
 
-    @Cacheable(value = "weatherData", key = "#city", unless = "#result == null")
     @Override
     public WeatherResponse getCurrentWeatherByCity(String city) {
 
+        Optional<WeatherApiResponse> cachedResponse = getCacheWeatherResponse(city, ApiSource.OPEN_WEATHER);
+
+        if (cachedResponse.isPresent()) {
+            log.info("Returning cached response for city: {}", city);
+
+            try {
+                JsonNode responseJsonNode = cachedResponse.get().getResponseJson();
+                return objectMapper.treeToValue(responseJsonNode, WeatherResponse.class);
+            } catch (JsonProcessingException e) {
+                log.error("Failed to deserialize cached response for city {}: {}", city, e.getMessage());
+                throw new WeatherServiceException(WeatherErrorType.SERIALIZATION_ERROR, "Failed to deserialize cached response for: " + city);
+            }
+        }
+
+        log.info("Start asking API");
         Map<String, String> queryParams = new HashMap<>();
         queryParams.put(PARAM_QUERY, city);
         queryParams.put(PARAM_APPID, apiKey);
@@ -60,13 +76,15 @@ public class OpenWeatherServiceImpl extends WeatherServiceBase implements OpenWe
 
         try {
            String responseJson = objectMapper.writeValueAsString(response);
+           String requestJson = objectMapper.writeValueAsString(queryParams);
 
-           saveWeatherResponse(city, null, ApiSource.OPEN_WEATHER, responseJson);
+           saveWeatherResponse(city, null, ApiSource.OPEN_WEATHER, responseJson, requestJson);
+           log.info("API data saved to the database");
         } catch (JsonProcessingException e) {
             log.error("Failed to serialize weather data for city {}: {}", city, e.getMessage());
             throw new WeatherServiceException(WeatherErrorType.SERIALIZATION_ERROR, "Failed to serialize weather data for: " + city);
         }
-
+        log.info("retrieved from database");
         return response;
     }
 

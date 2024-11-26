@@ -5,6 +5,7 @@ import com.quickweather.entity.WeatherApiResponseHistory;
 import com.quickweather.repository.WeatherApiResponseHistoryRepository;
 import com.quickweather.repository.WeatherApiResponseRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -27,11 +28,11 @@ public class WeatherCleanupService {
     }
 
     @Transactional
-    @Scheduled(fixedRate = 86400000)
+    @Scheduled(cron = "${weather.cleanup.cron}")
     public void archiveOldWeatherData() {
         LocalDateTime expiryTime = LocalDateTime.now().minusHours(5);
 
-        // dane do archiwizacji
+        // data for archive
         List<WeatherApiResponse> oldData = weatherApiResponseRepository.findAllByCreatedAtBefore(expiryTime);
 
         if (!oldData.isEmpty()) {
@@ -47,10 +48,10 @@ public class WeatherCleanupService {
                 return history;
             }).toList();
 
-            // Zapisanie do tabeli historycznej
+            // save into history tabel
             weatherApiResponseHistoryRepository.saveAll(historyData);
 
-            // Usuwanie z głównej tabeli
+            // remove from main table
             weatherApiResponseRepository.deleteAll(oldData);
         }
     }
