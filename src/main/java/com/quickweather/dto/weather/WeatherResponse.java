@@ -1,9 +1,8 @@
 package com.quickweather.dto.weather;
 
-import java.io.Serializable;
 import java.util.List;
 
-public class WeatherResponse implements Serializable {
+public class WeatherResponse {
 
     private Main main;
     private List<Weather> weather;

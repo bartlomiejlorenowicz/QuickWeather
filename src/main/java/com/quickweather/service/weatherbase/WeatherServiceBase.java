@@ -1,5 +1,7 @@
 package com.quickweather.service.weatherbase;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.quickweather.entity.ApiSource;
 import com.quickweather.entity.WeatherApiResponse;
@@ -28,7 +30,7 @@ public abstract class WeatherServiceBase {
         this.objectMapper = objectMapper;
     }
 
-    protected  <T> T fetchWeatherData(URI url, Class<T> responseType, String identifier) {
+    protected <T> T fetchWeatherData(URI url, Class<T> responseType, String identifier) {
         try {
             return restTemplate.getForObject(url, responseType);
         } catch (HttpClientErrorException e) {
@@ -55,19 +57,22 @@ public abstract class WeatherServiceBase {
     }
 
     //pobiera dane z bazy jesli sa dostepne
-    public Optional<Object> getCacheWeatherResponse(String city, ApiSource apiSource) {
-        return weatherApiResponseRepository
-                .findTopByCityAndApiSourceOrderByCreatedAtDesc(city, apiSource)
-                .map(WeatherApiResponse::getResponseJson);
+    public Optional<WeatherApiResponse> getCacheWeatherResponse(String city, ApiSource apiSource) {
+        return weatherApiResponseRepository.findTopByCityAndApiSourceOrderByCreatedAtDesc(city, apiSource);
     }
 
     //zapisuje JSON do bazy
-    protected void saveWeatherResponse(String city, String countryCode, ApiSource apiSource, String responseJson) {
+    protected void saveWeatherResponse(String city, String countryCode, ApiSource apiSource, String responseJson, String requestJson) throws JsonProcessingException {
+
+        JsonNode validatedResponseJson = objectMapper.readTree(responseJson);
+        JsonNode validatedRequestJson = objectMapper.readTree(requestJson);
+
         WeatherApiResponse weatherApiResponse = new WeatherApiResponse();
         weatherApiResponse.setCity(city);
         weatherApiResponse.setCountryCode(countryCode);
         weatherApiResponse.setApiSource(apiSource);
-        weatherApiResponse.setResponseJson(responseJson);
+        weatherApiResponse.setRequestJson(validatedRequestJson);
+        weatherApiResponse.setResponseJson(validatedResponseJson);
         weatherApiResponse.setCreatedAt(LocalDateTime.now());
 
         weatherApiResponseRepository.save(weatherApiResponse);
