@@ -62,7 +62,7 @@ public abstract class WeatherServiceBase {
     }
 
     //zapisuje JSON do bazy
-    protected void saveWeatherResponse(String city, String countryCode, ApiSource apiSource, String responseJson, String requestJson) throws JsonProcessingException {
+    public void saveWeatherResponse(String city, String countryCode, ApiSource apiSource, String responseJson, String requestJson) throws JsonProcessingException {
 
         JsonNode validatedResponseJson = objectMapper.readTree(responseJson);
         JsonNode validatedRequestJson = objectMapper.readTree(requestJson);

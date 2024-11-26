@@ -1,17 +1,20 @@
 package com.quickweather.service.openweathermap;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.quickweather.dto.forecast.HourlyForecastResponseDto;
 import com.quickweather.dto.zipcode.WeatherByZipCodeResponseDto;
 import com.quickweather.dto.weather.WeatherResponse;
 import com.quickweather.entity.ApiSource;
+import com.quickweather.entity.WeatherApiResponse;
 import com.quickweather.exceptions.WeatherErrorType;
 import com.quickweather.exceptions.WeatherServiceException;
 import com.quickweather.repository.WeatherApiResponseRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -22,6 +25,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.net.URI;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -53,6 +57,58 @@ class OpenWeatherServiceImplTest {
     void setUp(){
         ReflectionTestUtils.setField(currentWeatherService, "apiKey", TEST_API_KEY);
         ReflectionTestUtils.setField(currentWeatherService, "apiUrl", API_URL);
+    }
+
+    @Test
+    void testGetCacheWeatherResponseWithOpenWeatherServiceImpl() {
+
+        WeatherApiResponse mockResponse = new WeatherApiResponse();
+        mockResponse.setCity("London");
+        mockResponse.setApiSource(ApiSource.OPEN_WEATHER);
+        mockResponse.setCreatedAt(LocalDateTime.now());
+
+        when(weatherApiResponseRepository.findTopByCityAndApiSourceOrderByCreatedAtDesc("London", ApiSource.OPEN_WEATHER))
+                .thenReturn(Optional.of(mockResponse));
+
+        Optional<WeatherApiResponse> result = currentWeatherService.getCacheWeatherResponse("London", ApiSource.OPEN_WEATHER);
+
+        assertTrue(result.isPresent());
+        assertEquals("London", result.get().getCity());
+        Mockito.verify(weatherApiResponseRepository).findTopByCityAndApiSourceOrderByCreatedAtDesc("London", ApiSource.OPEN_WEATHER);
+    }
+
+    @Test
+    void shouldSaveWeatherResponseWithCorrectValues() throws Exception {
+
+        String city = "London";
+        String countryCode = "GB";
+        String responseJson = "{\"temp\": 20}";
+        String requestJson = "{\"query\": \"London\"}";
+
+        JsonNode responseJsonNode = objectMapper.readTree(responseJson);
+        JsonNode requestJsonNode = objectMapper.readTree(requestJson);
+
+        WeatherApiResponse mockSavedResponse = new WeatherApiResponse();
+        mockSavedResponse.setCity(city);
+        mockSavedResponse.setCountryCode(countryCode);
+        mockSavedResponse.setApiSource(ApiSource.OPEN_WEATHER);
+        mockSavedResponse.setResponseJson(responseJsonNode);
+        mockSavedResponse.setRequestJson(requestJsonNode);
+        mockSavedResponse.setCreatedAt(LocalDateTime.now());
+
+        Mockito.when(weatherApiResponseRepository.save(any(WeatherApiResponse.class))).thenReturn(mockSavedResponse);
+
+        currentWeatherService.saveWeatherResponse(city, countryCode, ApiSource.OPEN_WEATHER, responseJson, requestJson);
+
+        ArgumentCaptor<WeatherApiResponse> captor = ArgumentCaptor.forClass(WeatherApiResponse.class);
+        Mockito.verify(weatherApiResponseRepository).save(captor.capture());
+        WeatherApiResponse capturedResponse = captor.getValue();
+
+        assertEquals(city, capturedResponse.getCity());
+        assertEquals(countryCode, capturedResponse.getCountryCode());
+        assertEquals(ApiSource.OPEN_WEATHER, capturedResponse.getApiSource());
+        assertEquals(responseJsonNode, capturedResponse.getResponseJson());
+        assertEquals(requestJsonNode, capturedResponse.getRequestJson());
     }
 
     @Test
