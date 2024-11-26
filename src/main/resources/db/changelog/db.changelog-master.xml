@@ -140,6 +140,29 @@
         </createTable>
     </changeSet>
 
+    <changeSet id="clear-table-weather-api-responses" author="Bartek">
+        <sql>DELETE FROM weather_api_responses;</sql>
+    </changeSet>
+
+    <changeSet id="clear-table-weather-api-responses-history" author="Bartek">
+        <sql>DELETE FROM weather_api_responses_history;</sql>
+    </changeSet>
+
+    <changeSet id="add-column-request-json" author="Bartek">
+        <addColumn tableName="weather_api_responses">
+            <column name="request_json" type="JSON">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="add-weather-api-responses-history-request-json-column" author="Bartek">
+        <addColumn tableName="weather_api_responses_history">
+            <column name="request_json" type="JSON">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
 
 
 </databaseChangeLog>
