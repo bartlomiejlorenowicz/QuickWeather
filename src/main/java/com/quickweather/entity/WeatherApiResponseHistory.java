@@ -1,5 +1,6 @@
 package com.quickweather.entity;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.vladmihalcea.hibernate.type.json.JsonBinaryType;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -30,7 +31,11 @@ public class WeatherApiResponseHistory {
 
     @Type(JsonBinaryType.class)
     @Column(name = "response_json", columnDefinition = "json")
-    private Object responseJson;
+    private JsonNode responseJson;
+
+    @Type(JsonBinaryType.class)
+    @Column(name = "request_json", columnDefinition = "json")
+    private JsonNode requestJson;
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
