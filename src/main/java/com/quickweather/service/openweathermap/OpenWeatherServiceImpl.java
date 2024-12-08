@@ -1,7 +1,6 @@
 package com.quickweather.service.openweathermap;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.quickweather.dto.airpollution.AirPollutionResponseDto;
 import com.quickweather.dto.forecast.HourlyForecastResponseDto;
@@ -47,45 +46,54 @@ public class OpenWeatherServiceImpl extends WeatherServiceBase implements OpenWe
 
     @Override
     public WeatherResponse getCurrentWeatherByCity(String city) {
-
         Optional<WeatherApiResponse> cachedResponse = getCacheWeatherResponse(city, ApiSource.OPEN_WEATHER);
-
         if (cachedResponse.isPresent()) {
-            log.info("Returning cached response for city: {}", city);
-
-            try {
-                JsonNode responseJsonNode = cachedResponse.get().getResponseJson();
-                return objectMapper.treeToValue(responseJsonNode, WeatherResponse.class);
-            } catch (JsonProcessingException e) {
-                log.error("Failed to deserialize cached response for city {}: {}", city, e.getMessage());
-                throw new WeatherServiceException(WeatherErrorType.SERIALIZATION_ERROR, "Failed to deserialize cached response for: " + city);
-            }
+            return processCachedResponse(city, cachedResponse.get());
         }
 
-        log.info("Start asking API");
+        return fetchWeatherFromApi(city);
+    }
+
+    // helper methods for getCurrentWeatherByCity
+    private WeatherResponse processCachedResponse(String city, WeatherApiResponse cachedResponse) {
+        log.info("Returning cached response for city {}", city);
+        try {
+            return objectMapper.treeToValue(cachedResponse.getResponseJson(), WeatherResponse.class);
+        } catch (JsonProcessingException e) {
+            log.info("Failed to deserialize cached response for city {}: {}", city, e.getMessage());
+            throw new WeatherServiceException(WeatherErrorType.SERIALIZATION_ERROR, "Failed to deserialize cached response for: " + city);
+        }
+    }
+
+    private WeatherResponse fetchWeatherFromApi(String city) {
+        log.info("Fetching weather data from API for city {}", city);
+
         Map<String, String> queryParams = new HashMap<>();
         queryParams.put(PARAM_QUERY, city);
         queryParams.put(PARAM_APPID, apiKey);
         queryParams.put(PARAM_UNITS, "metric");
 
+        log.info("Building API request with params: {}", queryParams);
         URI url = UriBuilderUtils.buildUri(apiUrl, "weather", queryParams);
-        log.info("execution request with URL: {} and params: {}", apiUrl, queryParams);
-        log.info("with params {}", queryParams);
 
         WeatherResponse response = fetchWeatherData(url, WeatherResponse.class, city);
 
-        try {
-           String responseJson = objectMapper.writeValueAsString(response);
-           String requestJson = objectMapper.writeValueAsString(queryParams);
+        saveWeatherDataToDatabase(city, response, queryParams);
 
-           saveWeatherResponse(city, null, ApiSource.OPEN_WEATHER, responseJson, requestJson);
-           log.info("API data saved to the database");
+        return response;
+    }
+
+    private void saveWeatherDataToDatabase(String city, WeatherResponse response, Map<String, String> queryParams) {
+        try {
+            String responseJson = objectMapper.writeValueAsString(response);
+            String requestJson = objectMapper.writeValueAsString(queryParams);
+
+            saveWeatherResponse(city, null, ApiSource.OPEN_WEATHER, responseJson, requestJson);
+            log.info("API data saved to the database");
         } catch (JsonProcessingException e) {
             log.error("Failed to serialize weather data for city {}: {}", city, e.getMessage());
             throw new WeatherServiceException(WeatherErrorType.SERIALIZATION_ERROR, "Failed to serialize weather data for: " + city);
         }
-        log.info("retrieved from database");
-        return response;
     }
 
     @Override
