@@ -8,12 +8,14 @@ import com.quickweather.entity.WeatherApiResponseHistory;
 import com.quickweather.repository.WeatherApiResponseHistoryRepository;
 import com.quickweather.repository.WeatherApiResponseRepository;
 import com.quickweather.validator.IntegrationTestConfig;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -33,9 +35,19 @@ public class WeatherCleanupServiceIntegrationTest extends IntegrationTestConfig 
     @Autowired
     private WeatherCleanupService weatherCleanupService;
 
+    @Autowired
+    private Clock clock;
+
+    @BeforeEach
+    void clearDatabase() {
+        weatherApiResponseRepository.deleteAll();
+        weatherApiResponseHistoryRepository.deleteAll();
+    }
+
+
     @Test
     void testArchiveOldWeatherData_WithDatabase() {
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now(clock);
 
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode responseJson = objectMapper.createObjectNode().put("key", "value");
