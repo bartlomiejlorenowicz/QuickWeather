@@ -1,1 +1,6 @@
 /.idea/sonarlint/securityhotspotstore/2/4/2444713b9e047fb24313436d5fa0079aa787ecb2
+
+.idea/
+target/
+*.iml
+
