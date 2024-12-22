@@ -1,5 +1,6 @@
 package com.quickweather.security;
 
+import com.quickweather.security.JwtUtil;
 import com.quickweather.service.user.CustomUserDetailsService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
