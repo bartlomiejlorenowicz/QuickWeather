@@ -58,7 +58,7 @@ class UserCreationControllerTest extends IntegrationTestConfig {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(userDto)))
                 .andDo(print())
-                .andExpect(status().isOk());
+                .andExpect(status().isCreated());
 
         User user = userCreationRepository.findByEmail(userDto.getEmail()).get();
         Assertions.assertNotNull(user.getUuid());

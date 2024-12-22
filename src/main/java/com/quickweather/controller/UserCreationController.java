@@ -20,15 +20,9 @@ public class UserCreationController {
 
     @PostMapping
     public ResponseEntity<Void> register(@RequestBody UserDto userDto) {
-
-        try {
             userCreationService.createUser(userDto);
             log.info("User registered successfully: {}", userDto.getEmail());
             return ResponseEntity.status(HttpStatus.CREATED).build();
-        } catch (Exception e) {
-            log.error("Error registering user: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
     }
 
 }
