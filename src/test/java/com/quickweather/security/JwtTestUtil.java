@@ -15,6 +15,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 @Component
+@Profile("test")
 public class JwtTestUtil {
 
     private Key key;

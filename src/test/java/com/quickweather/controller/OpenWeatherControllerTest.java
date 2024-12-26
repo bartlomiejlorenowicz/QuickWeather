@@ -2,12 +2,13 @@ package com.quickweather.controller;
 
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
-import com.quickweather.dto.user.Role;
+import com.quickweather.entity.Role;
 import com.quickweather.entity.User;
 import com.quickweather.repository.UserCreationRepository;
 import com.quickweather.security.JwtTestUtil;
 import com.quickweather.security.TestConfig;
 import com.quickweather.validator.IntegrationTestConfig;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,14 +17,12 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Set;
 import java.util.UUID;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
@@ -51,22 +50,30 @@ class OpenWeatherControllerTest extends IntegrationTestConfig {
 
     @BeforeEach
     void setUp() {
+        Role userRole = new Role(1L, "ROLE_USER");
+        Role adminRole = new Role(2L, "ROLE_ADMIN");
+
         User user = User.builder().build();
         user.setFirstName("Adam");
         user.setLastName("Nowak");
-        user.setId(1L);
+        user.setId(99L);
         user.setUuid(UUID.randomUUID());
         user.setPhoneNumber("235432533");
-        user.setEmail("testUser");
+        user.setEmail("testUser@wp.pl");
         user.setPassword(passwordEncoder.encode("testPassword"));
-        user.setRole(Role.USER);
+        user.setRoles(Set.of(userRole));
         user.setEnabled(true);
 
         userRepository.save(user);
 
         // Generowanie tokenów
-        tokenUser = jwtTestUtil.generateToken("testUser", "ROLE_USER");
+        tokenUser = jwtTestUtil.generateToken("testUser@wp.pl", "ROLE_USER");
         tokenAdmin = jwtTestUtil.generateToken("adminUser", "ROLE_ADMIN");
+    }
+
+    @AfterEach
+    void tearDown() {
+        userRepository.deleteAll();
     }
 
     @Value("${open.weather.api.key}")

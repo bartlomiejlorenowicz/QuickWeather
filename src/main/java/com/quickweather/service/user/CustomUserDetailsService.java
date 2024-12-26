@@ -2,13 +2,17 @@ package com.quickweather.service.user;
 
 import com.quickweather.entity.User;
 import com.quickweather.repository.UserCreationRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
+@Slf4j
 public class CustomUserDetailsService implements UserDetailsService {
 
     private final UserCreationRepository userRepository;
@@ -19,20 +23,20 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        // Fetch user from the database
         User user = userRepository.findByEmail(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + username));
 
-        // Map the single role to Spring Security's GrantedAuthority
-        var authority = new SimpleGrantedAuthority("ROLE_" + user.getRole().name());
+        // Mapowanie ról na SimpleGrantedAuthority
+        var authorities = user.getRoles().stream()
+                .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getName()))
+                .toList();
 
-        // Return UserDetails object
         return org.springframework.security.core.userdetails.User.builder()
                 .username(user.getEmail())
-                .password(user.getPassword()) // Encoded password
-                .authorities(authority) // Assign authority
-                .accountLocked(user.isLocked()) // Map locked status
-                .disabled(!user.isEnabled()) // Map enabled status
+                .password(user.getPassword())
+                .authorities(authorities)
+                .accountLocked(user.isLocked())
+                .disabled(!user.isEnabled())
                 .build();
     }
 }
