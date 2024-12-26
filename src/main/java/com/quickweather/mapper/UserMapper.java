@@ -1,7 +1,6 @@
 package com.quickweather.mapper;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.quickweather.dto.user.Role;
 import com.quickweather.dto.user.UserDto;
 import com.quickweather.entity.User;
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +26,7 @@ public class UserMapper {
                 .phoneNumber(userDto.getPhoneNumber())
                 .isEnabled(true)
                 .isLocked(userDto.isLocked())
-                .role(userDto.getRole() == null ? Role.USER : userDto.getRole())
+                .roles(userDto.getRoles())
                 .build();
     }
 
@@ -41,10 +40,11 @@ public class UserMapper {
                 .phoneNumber(user.getPhoneNumber())
                 .isEnabled(user.isEnabled())
                 .isLocked(user.isLocked())
-                .role(user.getRole())
+                .roles(user.getRoles())
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
                 .build();
     }
 
+    //todo add uuid
 }

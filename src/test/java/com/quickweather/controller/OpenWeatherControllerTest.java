@@ -2,28 +2,79 @@ package com.quickweather.controller;
 
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
+import com.quickweather.entity.Role;
+import com.quickweather.entity.User;
+import com.quickweather.repository.UserCreationRepository;
+import com.quickweather.security.JwtTestUtil;
+import com.quickweather.security.TestConfig;
 import com.quickweather.validator.IntegrationTestConfig;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.ActiveProfiles;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Set;
+import java.util.UUID;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WireMockTest(httpPort = 8081)
-@ActiveProfiles("test")
+@Import(TestConfig.class)
+@SpringBootTest
 class OpenWeatherControllerTest extends IntegrationTestConfig {
 
     @Autowired
+    private JwtTestUtil jwtTestUtil;
+
+    @Autowired
+    private UserCreationRepository userRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+    private String tokenUser;
+    private String tokenAdmin;
+
+    @Autowired
     private MockMvc mockMvc;
+
+    @BeforeEach
+    void setUp() {
+        Role userRole = new Role(1L, "ROLE_USER");
+        Role adminRole = new Role(2L, "ROLE_ADMIN");
+
+        User user = User.builder().build();
+        user.setFirstName("Adam");
+        user.setLastName("Nowak");
+        user.setId(99L);
+        user.setUuid(UUID.randomUUID());
+        user.setPhoneNumber("235432533");
+        user.setEmail("testUser@wp.pl");
+        user.setPassword(passwordEncoder.encode("testPassword"));
+        user.setRoles(Set.of(userRole));
+        user.setEnabled(true);
+
+        userRepository.save(user);
+
+        // Generowanie tokenów
+        tokenUser = jwtTestUtil.generateToken("testUser@wp.pl", "ROLE_USER");
+        tokenAdmin = jwtTestUtil.generateToken("adminUser", "ROLE_ADMIN");
+    }
+
+    @AfterEach
+    void tearDown() {
+        userRepository.deleteAll();
+    }
 
     @Value("${open.weather.api.key}")
     private String apiKey;
@@ -44,6 +95,7 @@ class OpenWeatherControllerTest extends IntegrationTestConfig {
                         .withStatus(200)));
 
         mockMvc.perform(MockMvcRequestBuilders.get(url + "/city")
+                        .header("Authorization", "Bearer " + tokenUser)
                         .param("city", "London")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -55,6 +107,7 @@ class OpenWeatherControllerTest extends IntegrationTestConfig {
     @Test
     void shouldReturnBadRequest_WhenCityIsBlank() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.get(url + "/city")
+                        .header("Authorization", "Bearer " + tokenUser)
                         .param("city", "")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
@@ -64,6 +117,7 @@ class OpenWeatherControllerTest extends IntegrationTestConfig {
     @Test
     void shouldReturnNotFound_WhenCityIsUnknown() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.get(url + "/city")
+                        .header("Authorization", "Bearer " + tokenUser)
                         .param("city", "UnknownCity")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
@@ -82,6 +136,7 @@ class OpenWeatherControllerTest extends IntegrationTestConfig {
                         .withStatus(200)));
 
         mockMvc.perform(MockMvcRequestBuilders.get("/api/weather/zipcode")
+                        .header("Authorization", "Bearer " + tokenUser)
                         .param("zipcode", "37-203")
                         .param("countryCode", "pl")
                         .contentType(MediaType.APPLICATION_JSON))
@@ -93,6 +148,7 @@ class OpenWeatherControllerTest extends IntegrationTestConfig {
     @Test
     void shouldReturnBadRequest_WhenCountryCodeIsInvalid() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.get(url + "/zipcode")
+                        .header("Authorization", "Bearer " + tokenUser)
                         .param("zipcode", "37-203")
                         .param("countryCode", "1111")
                         .contentType(MediaType.APPLICATION_JSON))
@@ -103,6 +159,7 @@ class OpenWeatherControllerTest extends IntegrationTestConfig {
     @Test
     void shouldReturnBadRequest_WhenZipcodeIsMissing() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.get(url + "/zipcode")
+                        .header("Authorization", "Bearer " + tokenUser)
                         .param("countryCode", "pl")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
@@ -124,6 +181,7 @@ class OpenWeatherControllerTest extends IntegrationTestConfig {
                         .withStatus(200)));
 
         mockMvc.perform(MockMvcRequestBuilders.get(url + "/forecast")
+                        .header("Authorization", "Bearer " + tokenUser)
                         .param("city", "London")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -146,6 +204,7 @@ class OpenWeatherControllerTest extends IntegrationTestConfig {
                         .withStatus(200)));
 
         mockMvc.perform(MockMvcRequestBuilders.get(url + "/air-quality")
+                        .header("Authorization", "Bearer " + tokenUser)
                         .param("lat", "50.0")
                         .param("lon", "50.0")
                         .contentType(MediaType.APPLICATION_JSON))
@@ -156,6 +215,7 @@ class OpenWeatherControllerTest extends IntegrationTestConfig {
     @Test
     void shouldReturnBadRequest_WhenLatitudeIsEmpty() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.get(url + "/air-quality")
+                        .header("Authorization", "Bearer " + tokenUser)
                         .param("lat", "")
                         .param("lon", "50.0")
                         .contentType(MediaType.APPLICATION_JSON))
@@ -166,6 +226,7 @@ class OpenWeatherControllerTest extends IntegrationTestConfig {
     @Test
     void shouldReturnBadRequest_WhenLatitudeIsOutOfBounds() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.get(url + "/air-quality")
+                        .header("Authorization", "Bearer " + tokenUser)
                         .param("lat", "-91")
                         .param("lon", "50.0")
                         .contentType(MediaType.APPLICATION_JSON))
@@ -176,6 +237,7 @@ class OpenWeatherControllerTest extends IntegrationTestConfig {
     @Test
     void shouldReturnBadRequest_WhenLongitudeIsOutOfBounds() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.get(url + "/air-quality")
+                        .header("Authorization", "Bearer " + tokenUser)
                         .param("lat", "50.0")
                         .param("lon", "181")
                         .contentType(MediaType.APPLICATION_JSON))
@@ -198,6 +260,7 @@ class OpenWeatherControllerTest extends IntegrationTestConfig {
                         .withStatus(200)));
 
         mockMvc.perform(MockMvcRequestBuilders.get(url + "/forecast/daily")
+                        .header("Authorization", "Bearer " + tokenUser)
                         .param("city", "London")
                         .param("cnt", "2")
                         .param("units", "metric")

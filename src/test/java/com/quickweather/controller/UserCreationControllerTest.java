@@ -4,12 +4,10 @@ import com.quickweather.dto.user.UserDto;
 import com.quickweather.entity.User;
 import com.quickweather.repository.UserCreationRepository;
 import com.quickweather.validator.IntegrationTestConfig;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
@@ -27,6 +25,7 @@ class UserCreationControllerTest extends IntegrationTestConfig {
 
     @BeforeEach
     void setUp() {
+        userCreationRepository.deleteAll(); // Clear database before each test
         User user = User.builder()
                 .firstName("Andy")
                 .lastName("Murphy")
@@ -35,35 +34,15 @@ class UserCreationControllerTest extends IntegrationTestConfig {
                 .phoneNumber("1234567890")
                 .uuid(UUID.randomUUID())
                 .build();
-
         userCreationRepository.save(user);
     }
 
     @AfterEach
-    void clear() {
-        userCreationRepository.deleteAll();
+    void tearDown() {
+        userCreationRepository.deleteAll(); // Clean up database after each test
     }
 
-    @Test
-    void shouldRegisterUser() throws Exception {
-        UserDto userDto = UserDto.builder()
-                .firstName("John")
-                .lastName("Murphy")
-                .password("JohnP@ss123!")
-                .email("john1234@wp.pl")
-                .phoneNumber("1234567890")
-                .build();
 
-        mockMvc.perform(post(REGISTER_URL)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(userDto)))
-                .andDo(print())
-                .andExpect(status().isOk());
-
-        User user = userCreationRepository.findByEmail(userDto.getEmail()).get();
-        Assertions.assertNotNull(user.getUuid());
-
-    }
 
     @Test
     void shouldFailWhenFirstNameIsInvalid() throws Exception {
@@ -71,7 +50,7 @@ class UserCreationControllerTest extends IntegrationTestConfig {
                 .firstName("A")
                 .lastName("Murphy")
                 .password("JohnP@ss123!")
-                .email("john1235@wp.pl")
+                .email("andy.murphy@wp.pl")
                 .phoneNumber("1234567890")
                 .build();
 
@@ -83,6 +62,29 @@ class UserCreationControllerTest extends IntegrationTestConfig {
                 .andExpect(content()
                         .contentType("application/json"))
                 .andExpect(jsonPath("$.message").value("first name must have at least 2 letters"));
+    }
+
+    @Test
+    void shouldRegisterUser() throws Exception {
+
+        String uniqueEmail = "test" + UUID.randomUUID() + "@wp.pl";
+
+        UserDto userDto = UserDto.builder()
+                .firstName("John")
+                .lastName("Murphy")
+                .password("JohnP@ss123!")
+                .email(uniqueEmail)
+                .phoneNumber("1234567890")
+                .build();
+
+        mockMvc.perform(post(REGISTER_URL)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(userDto)))
+                .andDo(print())
+                .andExpect(status().isCreated());
+
+        User user = userCreationRepository.findByEmail(userDto.getEmail()).orElseThrow();
+        Assertions.assertNotNull(user.getUuid());
     }
 
     @Test

@@ -1,8 +1,10 @@
 package com.quickweather.dto.user;
 
+import com.quickweather.entity.Role;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.Set;
 
 @Builder
 @AllArgsConstructor
@@ -25,7 +27,7 @@ public class UserDto {
 
     private boolean isLocked;
 
-    private Role role;
+    private Set<Role> roles;
 
     private LocalDateTime createdAt;
 
