@@ -5,6 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -23,14 +24,25 @@ public class UserAuthenticationController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestParam String username, @RequestParam String password) {
+    public ResponseEntity<?> login(@RequestParam String username, @RequestParam String password) {
         if (username.isBlank() || password.isBlank()) {
             return ResponseEntity.badRequest().body("Username and password must not be empty");
         }
 
         try {
-            authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
-            String token = jwtUtil.generateToken(username);
+            var authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(username, password)
+            );
+
+            // Pobranie ról użytkownika
+            var roles = authentication.getAuthorities().stream()
+                    .map(GrantedAuthority::getAuthority) // Wyciągnięcie nazw ról
+                    .toList();
+
+            // Wygenerowanie tokena z rolami
+            String token = jwtUtil.generateToken(username, roles);
+
+            // Zwrócenie tokena w odpowiedzi
             return ResponseEntity.ok(token);
         } catch (AuthenticationException e) {
             return ResponseEntity.status(401).body("Invalid credentials");
