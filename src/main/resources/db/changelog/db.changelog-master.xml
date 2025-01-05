@@ -1,76 +1,128 @@
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                                       http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.15.xsd">
 
-    <!-- Create Users Table -->
-    <changeSet id="1-create-users-table" author="Bartek">
+    <!-- Tworzenie tabel -->
+    <changeSet id="001-create-users-table" author="Bartek">
         <preConditions onFail="MARK_RAN">
             <not>
                 <tableExists tableName="users"/>
             </not>
         </preConditions>
-
         <createTable tableName="users">
-            <column name="id" type="bigint" autoIncrement="true">
+            <column name="id" type="BIGINT" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="uuid" type="uuid">
+            <column name="uuid" type="UUID" defaultValueComputed="gen_random_uuid()" />
+            <column name="first_name" type="VARCHAR(255)">
                 <constraints nullable="false"/>
             </column>
-            <column name="first_name" type="varchar(255)">
+            <column name="last_name" type="VARCHAR(255)">
                 <constraints nullable="false"/>
             </column>
-            <column name="last_name" type="varchar(255)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="password" type="varchar(255)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="email" type="varchar(255)">
+            <column name="email" type="VARCHAR(255)">
                 <constraints nullable="false" unique="true"/>
             </column>
-            <column name="phone_number" type="varchar(15)"/>
-            <column name="is_enabled" type="boolean" defaultValueBoolean="true">
+            <column name="password" type="VARCHAR(255)">
                 <constraints nullable="false"/>
             </column>
-            <column name="is_locked" type="boolean" defaultValueBoolean="false">
+            <column name="phone_number" type="VARCHAR(15)"/>
+            <column name="is_enabled" type="BOOLEAN" defaultValue="true"/>
+            <column name="is_locked" type="BOOLEAN" defaultValue="false"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="NOW()">
                 <constraints nullable="false"/>
             </column>
-            <column name="created_at" type="timestamp">
-                <constraints nullable="false"/>
-            </column>
-            <column name="updated_at" type="timestamp"/>
+            <column name="updated_at" type="TIMESTAMP"/>
         </createTable>
-
-        <!-- Set Default Values -->
-        <update tableName="users">
-            <column name="uuid" valueComputed="gen_random_uuid()"/>
-            <column name="created_at" valueDate="CURRENT_TIMESTAMP"/>
-        </update>
     </changeSet>
 
-    <changeSet id="add-unique-constraint-email" author="Bartek">
-        <addUniqueConstraint tableName="users" columnNames="email" constraintName="uk_user_email"/>
+    <changeSet id="002-create-roles-table" author="Bartek">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="roles"/>
+            </not>
+        </preConditions>
+        <createTable tableName="roles">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+        </createTable>
     </changeSet>
 
+    <changeSet id="003-create-user-roles-table" author="Bartek">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="user_roles"/>
+            </not>
+        </preConditions>
+        <createTable tableName="user_roles">
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="role_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="user_roles" baseColumnNames="user_id"
+                                 referencedTableName="users" referencedColumnNames="id"
+                                 constraintName="fk_user_roles_user"/>
+        <addForeignKeyConstraint baseTableName="user_roles" baseColumnNames="role_id"
+                                 referencedTableName="roles" referencedColumnNames="id"
+                                 constraintName="fk_user_roles_role"/>
+    </changeSet>
 
-    <!-- Create Weather API Responses Table -->
-    <changeSet id="2-create-weather-api-responses-table" author="Bartek">
+    <!-- Inicjalizacja danych -->
+    <changeSet id="004-initialize-roles" author="Bartek">
+        <sql>
+            INSERT INTO public.roles (id, name)
+            SELECT 1, 'USER'
+                WHERE NOT EXISTS (SELECT 1 FROM public.roles WHERE id = 1);
+
+            INSERT INTO public.roles (id, name)
+            SELECT 2, 'ADMIN'
+                WHERE NOT EXISTS (SELECT 1 FROM public.roles WHERE id = 2);
+        </sql>
+    </changeSet>
+
+    <changeSet id="005-assign-default-role-to-users" author="Bartek">
+        <sql>
+            INSERT INTO user_roles (user_id, role_id)
+            SELECT u.id, r.id
+            FROM users u
+                     JOIN roles r ON r.name = 'USER';
+        </sql>
+    </changeSet>
+
+    <changeSet id="006-remove-created-at-column" author="Bartek">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="user_roles" columnName="created_at"/>
+        </preConditions>
+        <dropColumn tableName="user_roles" columnName="created_at"/>
+    </changeSet>
+
+    <!-- Tworzenie tabeli odpowiedzi API -->
+    <changeSet id="007-create-weather-api-responses-table" author="Bartek">
         <preConditions onFail="MARK_RAN">
             <not>
                 <tableExists tableName="weather_api_responses"/>
             </not>
         </preConditions>
-
         <createTable tableName="weather_api_responses">
-            <column name="id" type="bigint">
+            <column name="id" type="BIGINT" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
             <column name="city" type="VARCHAR(255)">
                 <constraints nullable="false"/>
             </column>
             <column name="country_code" type="VARCHAR(2)"/>
-            <column name="api_source" type="VARCHAR(50)">
+            <column name="api_source" type="VARCHAR(255)">
                 <constraints nullable="false"/>
             </column>
             <column name="response_json" type="JSON">
@@ -78,16 +130,13 @@
             </column>
             <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
         </createTable>
-
-        <!-- Add CHECK Constraint -->
         <sql>
             ALTER TABLE weather_api_responses
-                ADD CONSTRAINT check_apiSource
-                    CHECK (api_source IN ('OpenWeather', 'AccuWeather'));
+                ADD CONSTRAINT check_api_source CHECK (api_source IN ('OPEN_WEATHER', 'ACCU_WEATHER'));
         </sql>
     </changeSet>
 
-    <changeSet id="add-request-json-column" author="Bartek">
+    <changeSet id="008-add-request-json-column" author="Bartek">
         <preConditions onFail="MARK_RAN">
             <not>
                 <columnExists tableName="weather_api_responses" columnName="request_json"/>
@@ -98,59 +147,24 @@
         </addColumn>
     </changeSet>
 
-
-    <!-- Modify Weather API Responses Table -->
-    <changeSet id="3-modify-weather-api-responses" author="Bartek">
+    <!-- Aktualizacje i poprawki -->
+    <changeSet id="009-update-api-source-enum" author="Bartek">
         <preConditions onFail="MARK_RAN">
-            <columnExists tableName="weather_api_responses" columnName="apiSource"/>
-        </preConditions>
-        <renameColumn tableName="weather_api_responses"
-                      oldColumnName="apiSource"
-                      newColumnName="api_source" />
-    </changeSet>
-
-    <changeSet id="4-add-auto-increment-to-weather-api-responses-id" author="Bartek">
-        <preConditions onFail="MARK_RAN">
-            <and>
-                <tableExists tableName="weather_api_responses"/>
-                <columnExists tableName="weather_api_responses" columnName="id"/>
-            </and>
+            <sqlCheck expectedResult="1">
+                SELECT COUNT(*)
+                FROM information_schema.table_constraints
+                WHERE constraint_type = 'CHECK'
+                  AND table_name = 'weather_api_responses'
+                  AND constraint_name = 'check_api_source';
+            </sqlCheck>
         </preConditions>
         <sql>
-            CREATE SEQUENCE IF NOT EXISTS weather_api_responses_id_seq;
-        </sql>
-        <sql>
-            ALTER TABLE weather_api_responses
-                ALTER COLUMN id SET DEFAULT nextval('weather_api_responses_id_seq');
+            ALTER TABLE weather_api_responses DROP CONSTRAINT check_api_source;
         </sql>
     </changeSet>
 
-    <!-- Update Constraints -->
-    <changeSet id="5-update-check-constraint" author="Bartek">
-        <sql>
-            ALTER TABLE weather_api_responses DROP CONSTRAINT check_apiSource;
-        </sql>
-        <sql>
-            ALTER TABLE weather_api_responses
-                ADD CONSTRAINT check_apiSource
-                    CHECK (LOWER(api_source) IN ('openweather', 'accuweather'));
-        </sql>
-    </changeSet>
-
-    <changeSet id="6-update-apiSource-enum" author="Bartek">
-        <modifyDataType tableName="weather_api_responses" columnName="api_source" newDataType="VARCHAR(255)"/>
-        <sql>
-            ALTER TABLE weather_api_responses DROP CONSTRAINT check_apiSource;
-        </sql>
-        <sql>
-            ALTER TABLE weather_api_responses
-                ADD CONSTRAINT check_apiSource
-                    CHECK (api_source IN ('OPEN_WEATHER', 'ACCU_WEATHER'));
-        </sql>
-    </changeSet>
-
-    <!-- Create History Table -->
-    <changeSet id="7-create-weather-api-responses-history" author="Bartek">
+    <!-- Historia odpowiedzi API -->
+    <changeSet id="010-create-weather-api-responses-history" author="Bartek">
         <preConditions onFail="MARK_RAN">
             <not>
                 <tableExists tableName="weather_api_responses_history"/>
@@ -167,73 +181,24 @@
             <column name="created_at" type="TIMESTAMP"/>
             <column name="archived_at" type="TIMESTAMP"/>
         </createTable>
+    </changeSet>
+
+    <!-- Dodanie kolumny request_json do weather_api_responses_history -->
+    <changeSet id="012-add-request-json-to-history" author="Bartek">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="weather_api_responses_history" columnName="request_json"/>
+            </not>
+        </preConditions>
         <addColumn tableName="weather_api_responses_history">
-            <column name="request_json" type="JSON" defaultValue="{}">
-                <constraints nullable="false"/>
-            </column>
+            <column name="request_json" type="JSON"/>
         </addColumn>
     </changeSet>
 
-    <!-- Clear Tables -->
-    <changeSet id="8-clear-tables" author="Bartek">
+
+    <!-- Usuwanie danych (jeśli potrzebne) -->
+    <changeSet id="013-clear-weather-api-responses" author="Bartek">
         <sql>DELETE FROM weather_api_responses;</sql>
-        <sql>DELETE FROM weather_api_responses_history;</sql>
-    </changeSet>
-
-    <changeSet id="create-roles-table" author="Bartek">
-        <preConditions onFail="MARK_RAN">
-            <not>
-                <tableExists tableName="roles"/>
-            </not>
-        </preConditions>
-        <createTable tableName="roles">
-            <column name="id" type="BIGINT" autoIncrement="true">
-                <constraints primaryKey="true" nullable="false"/>
-            </column>
-            <column name="name" type="VARCHAR(255)">
-                <constraints nullable="false"/>
-            </column>
-        </createTable>
-    </changeSet>
-
-
-
-    <!-- Create User Roles Table -->
-    <changeSet id="9-create-user-roles-table" author="Bartek">
-        <preConditions onFail="MARK_RAN">
-            <not>
-                <tableExists tableName="user_roles"/>
-            </not>
-        </preConditions>
-        <createTable tableName="user_roles">
-            <column name="user_id" type="bigint">
-                <constraints nullable="false"/>
-            </column>
-            <column name="role_id" type="bigint">
-                <constraints nullable="false"/>
-            </column>
-        </createTable>
-        <addForeignKeyConstraint baseTableName="user_roles"
-                                 baseColumnNames="user_id"
-                                 referencedTableName="users"
-                                 referencedColumnNames="id"
-                                 constraintName="fk_user_roles_user_id"/>
-        <addForeignKeyConstraint baseTableName="user_roles"
-                                 baseColumnNames="role_id"
-                                 referencedTableName="roles"
-                                 referencedColumnNames="id"
-                                 constraintName="fk_user_roles_role_id"/>
-    </changeSet>
-
-    <!-- Add UUID and Constraints -->
-    <changeSet id="10-set-default-uuid" author="Bartek">
-        <update tableName="users">
-            <column name="uuid" valueComputed="gen_random_uuid()"/>
-        </update>
-    </changeSet>
-
-    <changeSet id="11-add-not-null-uuid" author="Bartek">
-        <addNotNullConstraint tableName="users" columnName="uuid" columnDataType="uuid"/>
     </changeSet>
 
 </databaseChangeLog>
