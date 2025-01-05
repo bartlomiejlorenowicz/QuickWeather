@@ -67,7 +67,6 @@ public class User {
 
     @PrePersist
     protected void onCreate() {
-        this.uuid = UUID.randomUUID();
         this.createdAt = LocalDateTime.now();
     }
 
@@ -75,5 +74,4 @@ public class User {
     protected void onUpdate() {
         this.updatedAt = LocalDateTime.now();
     }
-
 }

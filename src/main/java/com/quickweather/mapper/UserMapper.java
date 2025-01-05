@@ -2,9 +2,15 @@ package com.quickweather.mapper;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.quickweather.dto.user.UserDto;
+import com.quickweather.entity.Role;
+import com.quickweather.entity.RoleType;
 import com.quickweather.entity.User;
+import com.quickweather.repository.RoleRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+
+import java.util.Set;
+import java.util.UUID;
 
 @Slf4j
 @Component
@@ -12,12 +18,19 @@ public class UserMapper {
 
     private final ObjectMapper objectMapper;
 
-    public UserMapper(ObjectMapper objectMapper) {
+    private final RoleRepository roleRepository;
+
+    public UserMapper(ObjectMapper objectMapper, RoleRepository roleRepository) {
         this.objectMapper = objectMapper;
+        this.roleRepository = roleRepository;
     }
 
     public User toEntity(UserDto userDto) {
         log.info("Mapping UserDto to User entity for email: {}", userDto.getEmail());
+
+        Role userRole = roleRepository.findByRoleType(RoleType.USER)
+                .orElseThrow(() -> new RuntimeException("Default role USER not found"));
+
         return User.builder()
                 .firstName(userDto.getFirstName())
                 .lastName(userDto.getLastName())
@@ -26,7 +39,8 @@ public class UserMapper {
                 .phoneNumber(userDto.getPhoneNumber())
                 .isEnabled(true)
                 .isLocked(userDto.isLocked())
-                .roles(userDto.getRoles())
+                .roles(Set.of(userRole))
+                .uuid(UUID.randomUUID())
                 .build();
     }
 
@@ -36,7 +50,6 @@ public class UserMapper {
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())
                 .email(user.getEmail())
-                .password(user.getPassword())
                 .phoneNumber(user.getPhoneNumber())
                 .isEnabled(user.isEnabled())
                 .isLocked(user.isLocked())
@@ -45,6 +58,4 @@ public class UserMapper {
                 .updatedAt(user.getUpdatedAt())
                 .build();
     }
-
-    //todo add uuid
 }
