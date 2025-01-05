@@ -9,8 +9,6 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-
 @Service
 @Slf4j
 public class CustomUserDetailsService implements UserDetailsService {
@@ -28,7 +26,7 @@ public class CustomUserDetailsService implements UserDetailsService {
 
         // Mapowanie ról na SimpleGrantedAuthority
         var authorities = user.getRoles().stream()
-                .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getName()))
+                .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getRoleType()))
                 .toList();
 
         return org.springframework.security.core.userdetails.User.builder()

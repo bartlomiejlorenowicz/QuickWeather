@@ -2,6 +2,7 @@ package com.quickweather.controller;
 
 import com.quickweather.dto.user.UserId;
 import com.quickweather.entity.Role;
+import com.quickweather.entity.RoleType;
 import com.quickweather.entity.User;
 import com.quickweather.repository.RoleRepository;
 import com.quickweather.repository.UserCreationRepository;
@@ -13,7 +14,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -32,16 +32,13 @@ class UserAccountStatusControllerIntegrationTest extends IntegrationTestConfig {
     private JwtUtil jwtUtil;
 
     @BeforeEach
-    void cleanUpDatabase() {
+    void cleanUpAndSetupRoles() {
         userCreationRepository.deleteAll();
-        setupRoles();
-    }
+        roleRepository.deleteAll();
 
-    private void setupRoles() {
-        roleRepository.save(new Role(null, "ADMIN"));
-        roleRepository.save(new Role(null, "USER"));
+        roleRepository.save(Role.builder().roleType(RoleType.ADMIN).build());
+        roleRepository.save(Role.builder().roleType(RoleType.USER).build());
     }
-
 
     @Test
     void shouldEnableUser() throws Exception {
@@ -51,7 +48,6 @@ class UserAccountStatusControllerIntegrationTest extends IntegrationTestConfig {
                 .email("johhnun123.doe@example.com")
                 .password("password")
                 .isEnabled(false)
-                .roles(Set.of(new Role(null, "ADMIN")))
                 .phoneNumber("1234567890")
                 .uuid(UUID.randomUUID())
                 .build();
@@ -78,7 +74,6 @@ class UserAccountStatusControllerIntegrationTest extends IntegrationTestConfig {
                 .email("johhnun123.doe@example.com")
                 .password("password")
                 .isEnabled(true)
-                .roles(Set.of(new Role(null, "ADMIN")))
                 .phoneNumber("1234567890")
                 .uuid(UUID.randomUUID())
                 .build();
@@ -109,7 +104,6 @@ class UserAccountStatusControllerIntegrationTest extends IntegrationTestConfig {
                 .email("johhnun123.doe@example.com")
                 .password("password")
                 .isEnabled(true)
-                .roles(Set.of(new Role(null, "ADMIN")))
                 .phoneNumber("1234567890")
                 .uuid(UUID.randomUUID())
                 .build();
