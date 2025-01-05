@@ -2,6 +2,7 @@ package com.quickweather.service.user;
 
 import com.quickweather.dto.user.UserDto;
 import com.quickweather.entity.Role;
+import com.quickweather.entity.RoleType;
 import com.quickweather.mapper.UserMapper;
 import com.quickweather.repository.RoleRepository;
 import com.quickweather.repository.UserCreationRepository;
@@ -12,7 +13,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
 import java.util.Set;
-
 
 @Service
 @Slf4j
@@ -38,27 +38,18 @@ public class UserCreationService {
     }
 
     public void createUser(UserDto userDto) {
+        // Walidacja danych wejściowych
         validator.validate(userDto);
-        log.info("starting saving user with mail:" + userDto.getEmail());
+        log.info("Starting saving user with email: {}", userDto.getEmail());
 
+        // Mapowanie DTO na encję
         var userEntity = userMapper.toEntity(userDto);
         userEntity.setPassword(passwordEncoder.encode(userDto.getPassword()));
 
-        Set<Role> roles = new HashSet<>();
-        if (userDto.getRoles() != null && !userDto.getRoles().isEmpty()) {
-            // Pobranie ról z bazy danych lub utworzenie nowych, jeśli nie istnieją
-            for (Role role : userDto.getRoles()) {
-                Role existingRole = roleRepository.findByName(role.getName())
-                        .orElseGet(() -> roleRepository.save(new Role(null, role.getName())));
-                roles.add(existingRole);
-            }
-        } else {
-            // Domyślna rola (USER), jeśli role nie są przekazane
-            Role defaultRole = roleRepository.findByName("USER")
-                    .orElseGet(() -> roleRepository.save(new Role(null, "USER")));
-            roles.add(defaultRole);
-        }
-        userEntity.setRoles(roles);
+        // Przypisanie domyślnej roli USER
+        Role defaultRole = roleRepository.findByRoleType(RoleType.USER)
+                .orElseGet(() -> roleRepository.save(new Role(null, RoleType.USER, new HashSet<>())));
+        userEntity.setRoles(Set.of(defaultRole));
 
         // Zapis użytkownika w bazie danych
         log.info("Saving User entity to database: {}", userEntity);

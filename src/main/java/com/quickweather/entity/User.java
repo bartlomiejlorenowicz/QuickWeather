@@ -13,18 +13,20 @@ import java.util.UUID;
 @Data
 @Getter
 @Setter
-@EqualsAndHashCode
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Table(name = "users")
 public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @EqualsAndHashCode.Include
     private Long id;
 
     @Column(name = "uuid")
+    @EqualsAndHashCode.Include
     private UUID uuid;
 
     @Column(name = "first_name", nullable = false)
@@ -37,6 +39,7 @@ public class User {
     private String password;
 
     @Column(name = "email", nullable = false, unique = true)
+    @EqualsAndHashCode.Include
     private String email;
 
     @Column(name = "phone_number")
@@ -48,7 +51,7 @@ public class User {
     @Column(name = "is_locked", nullable = false)
     private boolean isLocked = false;
 
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "user_roles",
             joinColumns = @JoinColumn(name = "user_id"),
