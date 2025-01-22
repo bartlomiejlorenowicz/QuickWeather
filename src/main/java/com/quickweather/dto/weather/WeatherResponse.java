@@ -32,5 +32,4 @@ public class WeatherResponse {
         this.name = name;
     }
 
-
 }
