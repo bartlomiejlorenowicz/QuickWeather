@@ -3,7 +3,7 @@ package com.quickweather.validator;
 import com.quickweather.dto.user.UserDto;
 import com.quickweather.exceptions.UserErrorType;
 import com.quickweather.exceptions.UserValidationException;
-import com.quickweather.repository.UserCreationRepository;
+import com.quickweather.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -15,9 +15,9 @@ public class UserEmailValidator extends Validator {
 
     private static final String EMAIL_REGEX = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,6}$";
 
-    private final UserCreationRepository userCreationRepository;
+    private final UserRepository userCreationRepository;
 
-    public UserEmailValidator(UserCreationRepository userCreationRepository) {
+    public UserEmailValidator(UserRepository userCreationRepository) {
         this.userCreationRepository = userCreationRepository;
     }
 

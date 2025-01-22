@@ -1,13 +1,17 @@
 package com.quickweather.service.user;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.quickweather.dto.user.UserDto;
-import com.quickweather.entity.Role;
-import com.quickweather.entity.RoleType;
+import com.quickweather.entity.*;
 import com.quickweather.mapper.UserMapper;
 import com.quickweather.repository.RoleRepository;
-import com.quickweather.repository.UserCreationRepository;
+import com.quickweather.repository.UserRepository;
+import com.quickweather.repository.UserSearchHistoryRepository;
+import com.quickweather.repository.WeatherApiResponseRepository;
+import com.quickweather.service.openweathermap.OpenWeatherServiceImpl;
 import com.quickweather.validator.UserValidator;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -19,14 +23,13 @@ import java.util.Set;
 public class UserCreationService {
 
     private final UserValidator validator;
-    private final UserCreationRepository userCreationRepository;
+    private final UserRepository userCreationRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
-
     private final RoleRepository roleRepository;
 
     public UserCreationService(UserValidator validator,
-                               UserCreationRepository userCreationRepository,
+                               UserRepository userCreationRepository,
                                UserMapper userMapper,
                                PasswordEncoder passwordEncoder,
                                RoleRepository roleRepository) {
@@ -49,11 +52,22 @@ public class UserCreationService {
         // Przypisanie domyślnej roli USER
         Role defaultRole = roleRepository.findByRoleType(RoleType.USER)
                 .orElseGet(() -> roleRepository.save(new Role(null, RoleType.USER, new HashSet<>())));
-        userEntity.setRoles(Set.of(defaultRole));
+        // Użycie HashSet, aby kolekcja była mutowalna
+        Set<Role> roles = new HashSet<>();
+        roles.add(defaultRole);
+        userEntity.setRoles(roles);
 
         // Zapis użytkownika w bazie danych
         log.info("Saving User entity to database: {}", userEntity);
         userCreationRepository.save(userEntity);
         log.info("User is saved with roles: {}", userEntity.getRoles());
+
     }
+
+
+    public User findByEmail(String email) {
+        return userCreationRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
+    }
+
 }

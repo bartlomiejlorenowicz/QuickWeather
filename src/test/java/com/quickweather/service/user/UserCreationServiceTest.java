@@ -6,7 +6,7 @@ import com.quickweather.entity.RoleType;
 import com.quickweather.entity.User;
 import com.quickweather.mapper.UserMapper;
 import com.quickweather.repository.RoleRepository;
-import com.quickweather.repository.UserCreationRepository;
+import com.quickweather.repository.UserRepository;
 import com.quickweather.validator.UserValidator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -30,7 +30,7 @@ class UserCreationServiceTest {
     private UserValidator validator;
 
     @Mock
-    private UserCreationRepository userCreationRepository;
+    private UserRepository userCreationRepository;
 
     @Mock
     private UserMapper userMapper;

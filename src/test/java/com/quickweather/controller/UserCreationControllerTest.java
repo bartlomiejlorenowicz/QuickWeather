@@ -2,12 +2,11 @@ package com.quickweather.controller;
 
 import com.quickweather.dto.user.UserDto;
 import com.quickweather.entity.User;
-import com.quickweather.repository.UserCreationRepository;
+import com.quickweather.repository.UserRepository;
 import com.quickweather.validator.IntegrationTestConfig;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
@@ -21,7 +20,7 @@ class UserCreationControllerTest extends IntegrationTestConfig {
     private static final String REGISTER_URL = "/api/v1/user/register";
 
     @Autowired
-    private UserCreationRepository userCreationRepository;
+    private UserRepository userCreationRepository;
 
     @BeforeEach
     void setUp() {
