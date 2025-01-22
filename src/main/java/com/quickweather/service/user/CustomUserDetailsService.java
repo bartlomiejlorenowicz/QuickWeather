@@ -1,7 +1,7 @@
 package com.quickweather.service.user;
 
 import com.quickweather.entity.User;
-import com.quickweather.repository.UserCreationRepository;
+import com.quickweather.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -13,9 +13,9 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class CustomUserDetailsService implements UserDetailsService {
 
-    private final UserCreationRepository userRepository;
+    private final UserRepository userRepository;
 
-    public CustomUserDetailsService(UserCreationRepository userRepository) {
+    public CustomUserDetailsService(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
 
@@ -29,12 +29,15 @@ public class CustomUserDetailsService implements UserDetailsService {
                 .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getRoleType()))
                 .toList();
 
-        return org.springframework.security.core.userdetails.User.builder()
-                .username(user.getEmail())
-                .password(user.getPassword())
-                .authorities(authorities)
-                .accountLocked(user.isLocked())
-                .disabled(!user.isEnabled())
-                .build();
+        return new CustomUserDetails(
+                user.getId().toString(),
+                user.getEmail(),
+                user.getFirstName(),
+                user.getEmail(),
+                user.getPassword(),
+                user.isLocked(),
+                user.isEnabled(),
+                authorities
+        );
     }
 }
