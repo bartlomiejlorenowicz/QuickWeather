@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.net.URI;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -38,10 +39,25 @@ public class OpenWeatherServiceImpl extends WeatherServiceBase implements OpenWe
     private static final String PARAM_UNITS = "units";
     private static final String PARAM_QUERY = "q";
 
+    private final UserSearchHistoryService userSearchHistoryService;
+
     public OpenWeatherServiceImpl(RestTemplate restTemplate,
                                   WeatherApiResponseRepository weatherApiResponseRepository,
-                                  ObjectMapper objectMapper) {
+                                  ObjectMapper objectMapper,
+                                  UserSearchHistoryService userSearchHistoryService) {
         super(restTemplate, weatherApiResponseRepository, objectMapper);
+        this.userSearchHistoryService = userSearchHistoryService;
+    }
+
+    public void saveWeatherApiResponse(String city, WeatherResponse weatherResponse) {
+        WeatherApiResponse weatherApiResponse = new WeatherApiResponse();
+        weatherApiResponse.setCity(city);
+        weatherApiResponse.setApiSource(ApiSource.OPEN_WEATHER);
+        weatherApiResponse.setResponseJson(objectMapper.valueToTree(weatherResponse));
+        weatherApiResponse.setRequestJson(objectMapper.valueToTree(weatherResponse));
+        weatherApiResponse.setCreatedAt(LocalDateTime.now()); // Ustawienie daty utworzenia
+
+        weatherApiResponseRepository.save(weatherApiResponse);
     }
 
     @Override
