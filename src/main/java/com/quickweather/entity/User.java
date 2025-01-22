@@ -65,6 +65,9 @@ public class User {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<UserSearchHistory> searchHistory = new HashSet<>();
+
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();

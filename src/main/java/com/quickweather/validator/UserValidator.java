@@ -1,7 +1,7 @@
 package com.quickweather.validator;
 
 import com.quickweather.dto.user.UserDto;
-import com.quickweather.repository.UserCreationRepository;
+import com.quickweather.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -11,7 +11,7 @@ public class UserValidator {
 
     private final Validator validator;
 
-    public UserValidator(UserCreationRepository userCreationRepository) {
+    public UserValidator(UserRepository userCreationRepository) {
         validator = Validator.link(
                 new UserEmailValidator(userCreationRepository),
                 new UserFirstNameValidator(),

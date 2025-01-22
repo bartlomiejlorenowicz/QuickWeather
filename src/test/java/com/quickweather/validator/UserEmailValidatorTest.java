@@ -2,7 +2,7 @@ package com.quickweather.validator;
 
 import com.quickweather.dto.user.UserDto;
 import com.quickweather.exceptions.UserValidationException;
-import com.quickweather.repository.UserCreationRepository;
+import com.quickweather.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -16,7 +16,7 @@ import static org.mockito.Mockito.when;
 class UserEmailValidatorTest {
 
     @Mock
-    private UserCreationRepository userCreationRepository;
+    private UserRepository userCreationRepository;
 
     @InjectMocks
     private UserEmailValidator userEmailValidator;
