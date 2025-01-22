@@ -15,4 +15,6 @@ public interface WeatherApiResponseRepository extends JpaRepository<WeatherApiRe
     Optional<WeatherApiResponse> findTopByCityAndApiSourceOrderByCreatedAtDesc(String city, ApiSource apiSource);
 
     List<WeatherApiResponse> findAllByCreatedAtBefore(LocalDateTime expiryTime);
+
+    WeatherApiResponse findByCityAndApiSource(String city, ApiSource openWeather);
 }
