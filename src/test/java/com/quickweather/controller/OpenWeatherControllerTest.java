@@ -3,8 +3,10 @@ package com.quickweather.controller;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import com.quickweather.entity.Role;
+import com.quickweather.entity.RoleType;
 import com.quickweather.entity.User;
-import com.quickweather.repository.UserCreationRepository;
+import com.quickweather.repository.RoleRepository;
+import com.quickweather.repository.UserRepository;
 import com.quickweather.security.JwtTestUtil;
 import com.quickweather.security.TestConfig;
 import com.quickweather.validator.IntegrationTestConfig;
@@ -23,7 +25,6 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Set;
-import java.util.UUID;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -35,13 +36,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class OpenWeatherControllerTest extends IntegrationTestConfig {
 
     @Autowired
-    private JwtTestUtil jwtTestUtil;
+    private UserRepository userRepository;
 
     @Autowired
-    private UserCreationRepository userRepository;
+    private RoleRepository roleRepository;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private JwtTestUtil jwtTestUtil;
+
     private String tokenUser;
     private String tokenAdmin;
 
@@ -50,30 +55,43 @@ class OpenWeatherControllerTest extends IntegrationTestConfig {
 
     @BeforeEach
     void setUp() {
-        Role userRole = new Role(1L, "ROLE_USER");
-        Role adminRole = new Role(2L, "ROLE_ADMIN");
+        // Inicjalizacja ról w bazie, jeśli nie istnieją
+        if (!roleRepository.existsByRoleType(RoleType.USER)) {
+            Role userRole = Role.builder().roleType(RoleType.USER).build();
+            roleRepository.save(userRole);
+        }
+        if (!roleRepository.existsByRoleType(RoleType.ADMIN)) {
+            Role adminRole = Role.builder().roleType(RoleType.ADMIN).build();
+            roleRepository.save(adminRole);
+        }
 
-        User user = User.builder().build();
-        user.setFirstName("Adam");
-        user.setLastName("Nowak");
-        user.setId(99L);
-        user.setUuid(UUID.randomUUID());
-        user.setPhoneNumber("235432533");
-        user.setEmail("testUser@wp.pl");
-        user.setPassword(passwordEncoder.encode("testPassword"));
-        user.setRoles(Set.of(userRole));
-        user.setEnabled(true);
+        Role userRole = roleRepository.findByRoleType(RoleType.USER)
+                .orElseThrow(() -> new IllegalStateException("USER role not initialized in the database"));
+
+        Role adminRole = roleRepository.findByRoleType(RoleType.ADMIN)
+                .orElseThrow(() -> new IllegalStateException("ADMIN role not initialized in the database"));
+
+        // Utworzenie użytkownika
+        User user = User.builder()
+                .firstName("Adam")
+                .lastName("Nowak")
+                .email("testUser@wp.pl")
+                .password(passwordEncoder.encode("testPassword"))
+                .isEnabled(true)
+                .roles(Set.of(userRole, adminRole))
+                .build();
 
         userRepository.save(user);
 
-        // Generowanie tokenów
-        tokenUser = jwtTestUtil.generateToken("testUser@wp.pl", "ROLE_USER");
+        // Generowanie tokenów JWT
+        tokenUser = jwtTestUtil.generateToken(user.getEmail(), "ROLE_USER");
         tokenAdmin = jwtTestUtil.generateToken("adminUser", "ROLE_ADMIN");
     }
 
     @AfterEach
     void tearDown() {
         userRepository.deleteAll();
+        roleRepository.deleteAll();
     }
 
     @Value("${open.weather.api.key}")
@@ -116,6 +134,14 @@ class OpenWeatherControllerTest extends IntegrationTestConfig {
 
     @Test
     void shouldReturnNotFound_WhenCityIsUnknown() throws Exception {
+        stubFor(WireMock.get(urlPathEqualTo("/data/2.5/weather"))
+                .withQueryParam("q", equalTo("UnknownCity"))
+                .withQueryParam("appid", equalTo(apiKey))
+                .withQueryParam("units", equalTo("metric"))
+                .willReturn(aResponse()
+                        .withStatus(404)
+                        .withBody("{\"message\": \"city not found\"}")));
+
         mockMvc.perform(MockMvcRequestBuilders.get(url + "/city")
                         .header("Authorization", "Bearer " + tokenUser)
                         .param("city", "UnknownCity")
@@ -185,9 +211,9 @@ class OpenWeatherControllerTest extends IntegrationTestConfig {
                         .param("city", "London")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.list[0].main.temp").value(15.0))
-                .andExpect(jsonPath("$.list[0].weather[0].description").value("clear sky"))
-                .andExpect(jsonPath("$.city.name").value("Sample City"));
+                .andExpect(jsonPath("$[0].date").value("2024-11-04 12:00:00"))
+                .andExpect(jsonPath("$[0].temperature").value(15.0))
+                .andExpect(jsonPath("$[0].windSpeed").value(3.5));
     }
 
     @Test

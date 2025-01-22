@@ -1,5 +1,6 @@
 package com.quickweather.security;
 
+import com.quickweather.service.user.CustomUserDetails;
 import com.quickweather.service.user.CustomUserDetailsService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -37,6 +38,7 @@ public class JwtFilter extends OncePerRequestFilter {
             try {
                 if (jwtUtil.validateToken(token)) {
                     String username = jwtUtil.extractUsername(token);
+                    String userId = jwtUtil.extractUserId(token);
                     List<String> roles = jwtUtil.extractRoles(token);
 
                     // Mapowanie ról na obiekty SimpleGrantedAuthority
@@ -44,9 +46,11 @@ public class JwtFilter extends OncePerRequestFilter {
                             .map(SimpleGrantedAuthority::new)
                             .toList();
 
+                    CustomUserDetails customUserDetails = new CustomUserDetails(userId, username, authorities);
+
                     // Ustawienie kontekstu bezpieczeństwa
                     UsernamePasswordAuthenticationToken authentication =
-                            new UsernamePasswordAuthenticationToken(username, null, authorities);
+                            new UsernamePasswordAuthenticationToken(customUserDetails, null, authorities);
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                 }
             } catch (Exception e) {
