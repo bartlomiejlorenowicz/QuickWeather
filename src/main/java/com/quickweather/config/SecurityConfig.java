@@ -31,9 +31,11 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/user/auth/login", "/api/v1/user/register").permitAll()
 //                .requestMatchers("/api/v1/admin/**").permitAll()
 //                .requestMatchers("/api/weather/**").permitAll()
+                .requestMatchers("/api/weather/city").permitAll()
+                .requestMatchers("/api/weather/current-with-user-history").authenticated()
                 .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                 .requestMatchers("/api/v1/user/**").hasAnyRole("USER", "ADMIN")
-                .requestMatchers("/api/v1/user/**").permitAll()
+
                 .anyRequest().authenticated()
                 .and()
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
