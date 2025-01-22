@@ -86,6 +86,18 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<Map<String, String>> handleUserNotFoundException(UserNotFoundException ex) {
+        Map<String, String> response = new HashMap<>();
+        response.put(MESSAGE, ex.getMessage());
+        response.put("userId", ex.getUserId());
+        response.put(TIMESTAMP, LocalDateTime.now().toString());
+        response.put(ERROR_TYPE, "USER_NOT_FOUND");
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+    }
+
+
     private HttpStatus mapErrorTypeToHttpStatus(WeatherErrorType weatherErrorType) {
 
         return switch (weatherErrorType) {
