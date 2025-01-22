@@ -100,6 +100,18 @@
         </sql>
     </changeSet>
 
+    <changeSet id="add-unique-constraint-to-roles-name" author="Bartek">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <uniqueConstraintExists tableName="roles" constraintName="unique_role_name"/>
+            </not>
+        </preConditions>
+        <addUniqueConstraint
+                tableName="roles"
+                columnNames="name"
+                constraintName="unique_role_name"/>
+    </changeSet>
+
     <changeSet id="006-remove-created-at-column" author="Bartek">
         <preConditions onFail="MARK_RAN">
             <columnExists tableName="user_roles" columnName="created_at"/>
@@ -195,10 +207,39 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="013-create-user-search-history" author="Bartek">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="user_search_history"/>
+            </not>
+        </preConditions>
 
-    <!-- Usuwanie danych (jeśli potrzebne) -->
-    <changeSet id="013-clear-weather-api-responses" author="Bartek">
-        <sql>DELETE FROM weather_api_responses;</sql>
+        <!-- Tworzenie tabeli user_search_history -->
+        <createTable tableName="user_search_history">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="city" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="weather_api_response_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="searched_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
     </changeSet>
+
+    <changeSet id="014-remove-user-search-history-id-column" author="Bartek">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="weather_api_responses" columnName="user_search_history_id"/>
+        </preConditions>
+        <dropColumn tableName="weather_api_responses" columnName="user_search_history_id"/>
+    </changeSet>
+
 
 </databaseChangeLog>
