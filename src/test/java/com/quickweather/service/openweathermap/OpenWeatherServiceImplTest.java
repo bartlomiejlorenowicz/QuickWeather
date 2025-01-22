@@ -26,6 +26,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.net.URI;
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -129,10 +130,15 @@ class OpenWeatherServiceImplTest {
         when(objectMapper.writeValueAsString(mockWeatherResponse))
                 .thenReturn("{\"name\": \"London\"}");
 
+        // Mockowanie requestJson
+        when(objectMapper.writeValueAsString(any(Map.class)))
+                .thenReturn("{\"q\": \"London\", \"appid\": \"test-api-key\", \"units\": \"metric\"}");
+
         WeatherResponse result = spyService.getCurrentWeatherByCity(CITY);
 
         assertEquals(mockWeatherResponse, result);
         Mockito.verify(restTemplate).getForObject(any(URI.class), Mockito.eq(WeatherResponse.class));
+        Mockito.verify(objectMapper, Mockito.atLeastOnce()).writeValueAsString(any());
     }
 
     @Test
@@ -150,6 +156,10 @@ class OpenWeatherServiceImplTest {
 
         when(objectMapper.writeValueAsString(mockWeatherResponse))
                 .thenReturn("{\"name\": \"London\"}");
+
+        // Mockowanie requestJson
+        when(objectMapper.writeValueAsString(any(Map.class)))
+                .thenReturn("{\"q\": \"London\", \"appid\": \"test-api-key\", \"units\": \"metric\"}");
 
         WeatherResponse result = spyService.getCurrentWeatherByCity(CITY);
 

@@ -3,8 +3,7 @@ package com.quickweather.service.user;
 import com.quickweather.dto.user.UserId;
 import com.quickweather.entity.User;
 import com.quickweather.exceptions.UserValidationException;
-import com.quickweather.repository.UserCreationRepository;
-import com.quickweather.service.user.UserStatusService;
+import com.quickweather.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -19,7 +18,7 @@ import static org.mockito.Mockito.*;
 class UserStatusServiceTest {
 
     @Mock
-    private UserCreationRepository userCreationRepository;
+    private UserRepository userCreationRepository;
 
     @InjectMocks
     private UserStatusService userStatusService;

@@ -1,5 +1,6 @@
 package com.quickweather.entity;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.vladmihalcea.hibernate.type.json.JsonBinaryType;
 import jakarta.persistence.*;
@@ -8,6 +9,8 @@ import lombok.Setter;
 import org.hibernate.annotations.Type;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Setter
@@ -36,6 +39,10 @@ public class WeatherApiResponse {
     @Type(JsonBinaryType.class)
     @Column(name = "request_json", columnDefinition = "json")
     private JsonNode requestJson;
+
+    @JsonManagedReference
+    @OneToMany(mappedBy = "weatherApiResponse", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<UserSearchHistory> userSearchHistories = new ArrayList<>();
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

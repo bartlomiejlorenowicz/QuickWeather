@@ -4,7 +4,7 @@ import com.quickweather.dto.user.UserId;
 import com.quickweather.entity.User;
 import com.quickweather.exceptions.UserErrorType;
 import com.quickweather.exceptions.UserValidationException;
-import com.quickweather.repository.UserCreationRepository;
+import com.quickweather.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,9 +13,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class UserStatusService {
 
-    private final UserCreationRepository userCreationRepository;
+    private final UserRepository userCreationRepository;
 
-    public UserStatusService(UserCreationRepository userCreationRepository) {
+    public UserStatusService(UserRepository userCreationRepository) {
         this.userCreationRepository = userCreationRepository;
     }
 
