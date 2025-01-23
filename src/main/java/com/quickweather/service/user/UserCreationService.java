@@ -1,14 +1,11 @@
 package com.quickweather.service.user;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.quickweather.dto.user.UserDto;
 import com.quickweather.entity.*;
 import com.quickweather.mapper.UserMapper;
 import com.quickweather.repository.RoleRepository;
 import com.quickweather.repository.UserRepository;
-import com.quickweather.repository.UserSearchHistoryRepository;
-import com.quickweather.repository.WeatherApiResponseRepository;
-import com.quickweather.service.openweathermap.OpenWeatherServiceImpl;
+
 import com.quickweather.validator.UserValidator;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;

@@ -5,31 +5,40 @@ import com.quickweather.entity.Role;
 import com.quickweather.entity.RoleType;
 import com.quickweather.entity.User;
 import com.quickweather.repository.RoleRepository;
-import com.quickweather.repository.UserCreationRepository;
+import com.quickweather.repository.UserRepository;
 import com.quickweather.security.JwtUtil;
+import com.quickweather.service.user.CustomUserDetails;
+import com.quickweather.service.user.CustomUserDetailsService;
 import com.quickweather.validator.IntegrationTestConfig;
+import org.junit.Test;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 
 class UserAccountStatusControllerIntegrationTest extends IntegrationTestConfig {
 
     @Autowired
-    private UserCreationRepository userCreationRepository;
+    private UserRepository userCreationRepository;
 
     @Autowired
     private RoleRepository roleRepository;
 
     @Autowired
     private JwtUtil jwtUtil;
+
+    @Autowired
+    private CustomUserDetailsService userDetailsService;
 
     @BeforeEach
     void cleanUpAndSetupRoles() {
@@ -45,16 +54,23 @@ class UserAccountStatusControllerIntegrationTest extends IntegrationTestConfig {
         User user = User.builder()
                 .firstName("John")
                 .lastName("Doe")
-                .email("johhnun123.doe@example.com")
+                .email("john.doe@example.com")
                 .password("password")
                 .isEnabled(false)
                 .phoneNumber("1234567890")
                 .uuid(UUID.randomUUID())
+                .roles(Set.of(
+                        roleRepository.findByRoleType(RoleType.USER).orElseThrow()
+                ))
                 .build();
 
         user = userCreationRepository.save(user);
 
-        String token = jwtUtil.generateToken("johhnun123.doe@example.com", List.of("ROLE_ADMIN"));
+        CustomUserDetails customUserDetails = userDetailsService.createCustomUserDetails(user);
+
+        Map<String, Object> tokenResponse = jwtUtil.generateToken(customUserDetails, user.getUuid());
+        String token = (String) tokenResponse.get("token");
+
 
         mockMvc.perform(put("/api/v1/user/account-status/enable")
                         .header("Authorization", "Bearer " + token)
@@ -71,16 +87,22 @@ class UserAccountStatusControllerIntegrationTest extends IntegrationTestConfig {
         User user = User.builder()
                 .firstName("John")
                 .lastName("Doe")
-                .email("johhnun123.doe@example.com")
+                .email("john.doe@example.com")
                 .password("password")
-                .isEnabled(true)
+                .isEnabled(false)
                 .phoneNumber("1234567890")
                 .uuid(UUID.randomUUID())
+                .roles(Set.of(
+                        roleRepository.findByRoleType(RoleType.USER).orElseThrow()
+                ))
                 .build();
 
         user = userCreationRepository.save(user);
 
-        String token = jwtUtil.generateToken("johhnun123.doe@example.com", List.of("ROLE_ADMIN"));
+        CustomUserDetails customUserDetails = userDetailsService.createCustomUserDetails(user);
+
+        Map<String, Object> tokenResponse = jwtUtil.generateToken(customUserDetails, user.getUuid());
+        String token = (String) tokenResponse.get("token");
 
         mockMvc.perform(put("/api/v1/user/account-status/disable").content(objectMapper.writeValueAsString(new UserId(user.getId())))
                         .header("Authorization", "Bearer " + token)
@@ -94,24 +116,29 @@ class UserAccountStatusControllerIntegrationTest extends IntegrationTestConfig {
     @Test
     void shouldReturnBadRequestUserDoesNotExist() throws Exception {
 
-        UserId userId = new UserId(11L);
+        UserId nonExistentUserId = new UserId(999L);
 
-        String token = jwtUtil.generateToken("johhnun123.doe@example.com", List.of("ROLE_ADMIN"));
-
-        User user = User.builder()
-                .firstName("John")
-                .lastName("Doe")
-                .email("johhnun123.doe@example.com")
+        User adminUser = User.builder()
+                .firstName("Admin")
+                .lastName("User")
+                .email("admin@example.com")
                 .password("password")
                 .isEnabled(true)
-                .phoneNumber("1234567890")
                 .uuid(UUID.randomUUID())
+                .roles(Set.of(
+                        roleRepository.findByRoleType(RoleType.ADMIN).orElseThrow()
+                ))
                 .build();
 
-        userCreationRepository.save(user);
+        adminUser = userCreationRepository.save(adminUser);
 
-        mockMvc.perform(put("/api/v1/user/account-status/disable").content(objectMapper.writeValueAsString(userId))
+        CustomUserDetails customUserDetails = userDetailsService.createCustomUserDetails(adminUser);
+        Map<String, Object> tokenResponse = jwtUtil.generateToken(customUserDetails, adminUser.getUuid());
+        String token = (String) tokenResponse.get("token");
+
+        mockMvc.perform(put("/api/v1/user/account-status/disable")
                         .header("Authorization", "Bearer " + token)
+                        .content(objectMapper.writeValueAsString(nonExistentUserId))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest());
     }
