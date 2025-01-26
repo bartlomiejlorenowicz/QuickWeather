@@ -1,11 +1,13 @@
 package com.quickweather.service.user;
 
+import com.google.api.services.gmail.Gmail;
 import com.quickweather.dto.user.UserDto;
 import com.quickweather.entity.*;
 import com.quickweather.mapper.UserMapper;
 import com.quickweather.repository.RoleRepository;
 import com.quickweather.repository.UserRepository;
 
+import com.quickweather.service.email.GmailQuickstart;
 import com.quickweather.validator.UserValidator;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -24,17 +26,20 @@ public class UserCreationService {
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final RoleRepository roleRepository;
+    private final GmailQuickstart gmailQuickstart;
 
     public UserCreationService(UserValidator validator,
                                UserRepository userCreationRepository,
                                UserMapper userMapper,
                                PasswordEncoder passwordEncoder,
-                               RoleRepository roleRepository) {
+                               RoleRepository roleRepository,
+                               GmailQuickstart gmailQuickstart) {
         this.validator = validator;
         this.userCreationRepository = userCreationRepository;
         this.userMapper = userMapper;
         this.passwordEncoder = passwordEncoder;
         this.roleRepository = roleRepository;
+        this.gmailQuickstart = gmailQuickstart;
     }
 
     public void createUser(UserDto userDto) {
@@ -59,6 +64,22 @@ public class UserCreationService {
         userCreationRepository.save(userEntity);
         log.info("User is saved with roles: {}", userEntity.getRoles());
 
+        try {
+            // Call the Gmail API service to send the email
+            Gmail service = gmailQuickstart.getGmailService();
+            gmailQuickstart.sendEmail(
+                    service,
+                    userDto.getEmail(),
+                    "Welcome to QuickWeather!",
+                    String.format(
+                            "Hi %s,\n\nThank you for registering with QuickWeather. We hope you enjoy using our service!",
+                            userDto.getFirstName()
+                    )
+            );
+            log.info("Welcome email sent to: {}", userDto.getEmail());
+        } catch (Exception e) {
+            log.error("Failed to send welcome email to {}: {}", userDto.getEmail(), e.getMessage(), e);
+        }
     }
 
 
