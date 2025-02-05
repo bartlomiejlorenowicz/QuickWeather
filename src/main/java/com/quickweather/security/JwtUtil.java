@@ -1,10 +1,13 @@
 package com.quickweather.security;
+import com.quickweather.entity.User;
 import com.quickweather.service.user.CustomUserDetails;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
@@ -17,35 +20,34 @@ import java.util.*;
 @Slf4j
 public class JwtUtil {
 
-    @Value("${jwt.secret}")
-    private String secret;
+    private final SecretKey secretKey;
+    private final SecretKey resetKey;
+    private final long expirationTime;
 
-    @Value("${jwt.expiration}")
-    private long expirationTime;
+    public JwtUtil(@Value("${jwt.secret}") String secret,
+                   @Value("${jwt.reset-secret}") String resetSecret,
+                   @Value("${jwt.expiration}") long expirationTime) {
+        this.expirationTime = expirationTime;
 
-    private SecretKey secretKey;
-
-    @PostConstruct
-    public void init() {
-        if (secret.getBytes().length < 32) {
-            throw new IllegalArgumentException("JWT secret key must be at least 256 bits long");
-        }
-        this.secretKey = Keys.hmacShaKeyFor(secret.getBytes());
+        // Dekodowanie kluczy z Base64
+        this.secretKey = Keys.hmacShaKeyFor(Base64.getDecoder().decode(secret));
+        this.resetKey = Keys.hmacShaKeyFor(Base64.getDecoder().decode(resetSecret));
     }
 
     public Map<String, Object> generateToken(CustomUserDetails userDetails, UUID uuid) {
         String token = Jwts.builder()
-                .setHeaderParam("typ", "JWT")
-                .setSubject(uuid.toString())
-                .claim("userId", userDetails.getUserId())
+                .setHeaderParam("type", "JWT")
+                .setSubject(userDetails.getEmail())
+                .claim("userId", Long.valueOf(userDetails.getUserId()))
                 .claim("name", userDetails.getName())
                 .claim("email", userDetails.getEmail())
+                .claim("uuid", uuid.toString())
                 .claim("roles", userDetails.getAuthorities().stream()
                         .map(GrantedAuthority::getAuthority)
                         .toList())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + expirationTime))
-                .signWith(secretKey, SignatureAlgorithm.HS256) // Podpis tokena
+                .signWith(secretKey, SignatureAlgorithm.HS256) // Podpi-s tokena
                 .compact();
 
         log.info("User authorities: {}", userDetails.getAuthorities());
@@ -58,6 +60,47 @@ public class JwtUtil {
         return tokenResponse;
     }
 
+    public String generateResetToken(User user) {
+        return Jwts.builder()
+                .setSubject(user.getEmail())
+                .claim("userId", user.getId())
+                .claim("type", "reset-password")
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + 15 * 60 * 1000)) // 15 min ważności
+                .signWith(resetKey, SignatureAlgorithm.HS256)
+                .compact();
+    }
+
+    public boolean validateToken(String token) {
+        try {
+            Jwts.parserBuilder()
+                    .setSigningKey(secretKey)
+                    .build()
+                    .parseClaimsJws(token);
+            return true;
+        } catch (JwtException e) {
+            log.error("Invalid JWT token: {}", e.getMessage());
+            return false;
+        }
+    }
+
+    public boolean validateResetToken(String token) {
+        try {
+            Claims claims = Jwts.parserBuilder()
+                    .setSigningKey(resetKey)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+
+            String type = claims.get("type", String.class);
+            Date expiration = claims.getExpiration();
+
+            return "reset-password".equals(type) && expiration.after(new Date());
+        } catch (JwtException e) {
+            log.error("Invalid reset token: {}", e.getMessage());
+            return false;
+        }
+    }
 
     public String extractUsername(String token) {
         try {
@@ -96,32 +139,56 @@ public class JwtUtil {
         }
     }
 
-
-    public boolean validateToken(String token) {
+    public String extractTokenForType(String token) {
         try {
-            Jwts.parserBuilder()
-                    .setSigningKey(secretKey)
+            Claims claims = Jwts.parserBuilder()
+                    .setSigningKey(secretKey) // Klucz weryfikujący podpis
                     .build()
-                    .parseClaimsJws(token);
-            return true;
+                    .parseClaimsJws(token) // Parsowanie tokena
+                    .getBody(); // Pobranie części payload
+
+            return claims.get("type", String.class); // Wyciągnięcie wartości claim "type"
         } catch (JwtException e) {
-            log.error("Invalid JWT token: {}", e.getMessage());
-            return false;
+            log.error("Invalid token: {}", e.getMessage());
+            return null; // Zwrot null w przypadku błędnego tokena
         }
     }
 
-    public String extractUserId(String token) {
+    public Long extractUserId(String token) {
         try {
-            return Jwts.parserBuilder()
+            Claims claims = Jwts.parserBuilder()
                     .setSigningKey(secretKey)
                     .build()
                     .parseClaimsJws(token)
-                    .getBody()
-                    .get("userId", String.class); // Pobierz wartość userId jako String
+                    .getBody();
+
+            Object userIdClaim = claims.get("userId");
+            if (userIdClaim instanceof String) {
+                return Long.parseLong((String) userIdClaim);
+            } else if (userIdClaim instanceof Number) {
+                return ((Number) userIdClaim).longValue();
+            } else {
+                throw new JwtException("Invalid userId type in token");
+            }
         } catch (JwtException e) {
             log.error("Failed to extract userId from token: {}", e.getMessage());
             throw e;
         }
     }
+
+    public String extractUuid(String token) {
+        try {
+            Claims claims = Jwts.parserBuilder()
+                    .setSigningKey(secretKey)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+            return claims.get("uuid", String.class);
+        } catch (JwtException e) {
+            log.error("Failed to extract UUID from token: {}", e.getMessage());
+            throw e;
+        }
+    }
+
 
 }

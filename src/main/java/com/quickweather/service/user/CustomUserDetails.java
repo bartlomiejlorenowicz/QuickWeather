@@ -4,10 +4,11 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
+import java.util.UUID;
 
 public class CustomUserDetails implements UserDetails {
 
-    private final String userId;
+    private final Long userId;
     private final String username;
     private final String name;
     private final String email;
@@ -15,10 +16,17 @@ public class CustomUserDetails implements UserDetails {
     private final boolean isLocked;
     private final boolean isEnabled;
     private final Collection<? extends GrantedAuthority> authorities;
+    private final UUID uuid;
 
-    // Główny konstruktor
-    public CustomUserDetails(String userId, String username, String name, String email, String password,
-                             boolean isLocked, boolean isEnabled, Collection<? extends GrantedAuthority> authorities) {
+    public CustomUserDetails(Long userId,
+                             String username,
+                             String name,
+                             String email,
+                             String password,
+                             boolean isLocked,
+                             boolean isEnabled,
+                             Collection<? extends GrantedAuthority> authorities,
+                             UUID uuid) {
         this.userId = userId;
         this.username = username;
         this.name = name;
@@ -27,16 +35,22 @@ public class CustomUserDetails implements UserDetails {
         this.isLocked = isLocked;
         this.isEnabled = isEnabled;
         this.authorities = authorities;
+        this.uuid = uuid;
     }
 
     // Dodatkowy konstruktor bez hasła, imienia i emaila
-    public CustomUserDetails(String userId, String username, Collection<? extends GrantedAuthority> authorities) {
-        this(userId, username, null, null, null, false, true, authorities);
+//    public CustomUserDetails(Long userId, String username, Collection<? extends GrantedAuthority> authorities) {
+//        this(userId, username, null, null, null, false, true, authorities);
+//    }
+
+
+    public Long getUserId() {
+        return userId;
     }
 
-    // Gettery
-    public String getUserId() {
-        return userId;
+    @Override
+    public String getUsername() {
+        return username;
     }
 
     public String getName() {
@@ -48,37 +62,25 @@ public class CustomUserDetails implements UserDetails {
     }
 
     @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        return authorities;
-    }
-
-    @Override
     public String getPassword() {
         return password;
     }
 
-    @Override
-    public String getUsername() {
-        return username;
-    }
-
-    @Override
-    public boolean isAccountNonExpired() {
-        return true;
-    }
-
-    @Override
-    public boolean isAccountNonLocked() {
-        return !isLocked;
-    }
-
-    @Override
-    public boolean isCredentialsNonExpired() {
-        return true;
+    public boolean isLocked() {
+        return isLocked;
     }
 
     @Override
     public boolean isEnabled() {
         return isEnabled;
+    }
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return authorities;
+    }
+
+    public UUID getUuid() {
+        return uuid;
     }
 }

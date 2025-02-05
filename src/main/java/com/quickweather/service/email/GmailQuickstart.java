@@ -54,11 +54,19 @@ public class GmailQuickstart {
 
         GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(
                 HTTP_TRANSPORT, JSON_FACTORY, clientSecrets, SCOPES)
-                .setDataStoreFactory(new FileDataStoreFactory(new java.io.File(TOKENS_DIRECTORY_PATH)))
-                .setAccessType("offline")
+                .setDataStoreFactory(new FileDataStoreFactory(new java.io.File("tokens"))) // Tokeny będą zapisane tutaj!
+                .setAccessType("offline") // MUSI być offline, aby uzyskać refresh_token
                 .build();
-        LocalServerReceiver receiver = new LocalServerReceiver.Builder().setPort(8888).build();
-        return new AuthorizationCodeInstalledApp(flow, receiver).authorize("user");
+
+        Credential credential = flow.loadCredential("user");
+
+        if (credential != null) {
+            log.info("Loaded existing credentials.");
+            return credential;
+        }
+
+        log.info("No existing credentials found, starting new authorization.");
+        return new AuthorizationCodeInstalledApp(flow, new LocalServerReceiver.Builder().setPort(8888).build()).authorize("user");
     }
 
     /**
@@ -75,6 +83,8 @@ public class GmailQuickstart {
      * Sends an email using Gmail API.
      */
     public void sendEmail(Gmail service, String to, String subject, String bodyText) throws Exception {
+        log.info("Sending email to: {}", to);
+
         MimeMessage email = createEmail(to, EMAIL_SENDER, subject, bodyText);
         sendMessage(service, "me", email);
     }

@@ -9,6 +9,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -23,44 +24,54 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        log.debug("Attempting to load user by username/email: {}", username);
+
+        if (username == null || username.isEmpty()) {
+            log.error("Username is null or empty!");
+            throw new UsernameNotFoundException("Email is null or empty");
+        }
+
         User user = userRepository.findByEmail(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + username));
 
-        // Mapowanie ról na SimpleGrantedAuthority
+        log.debug("User found: {}", user.getEmail());
+
         var authorities = user.getRoles().stream()
                 .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getRoleType()))
-                .toList();
+                .collect(Collectors.toList());
 
+        // Upewnij się, że obiekt User posiada metodę getUuid()
         return new CustomUserDetails(
-                user.getId().toString(),
+                user.getId(),
                 user.getEmail(),
                 user.getFirstName(),
                 user.getEmail(),
                 user.getPassword(),
                 user.isLocked(),
                 user.isEnabled(),
-                authorities
+                authorities,
+                user.getUuid()
         );
     }
 
     public CustomUserDetails createCustomUserDetails(User user) {
         log.debug("Creating CustomUserDetails for user with ID: {}", user.getId());
 
-        // Mapowanie ról użytkownika na SimpleGrantedAuthority
         var authorities = user.getRoles().stream()
                 .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getRoleType()))
                 .collect(Collectors.toList());
 
-        // Tworzenie obiektu CustomUserDetails
         return new CustomUserDetails(
-                user.getId().toString(),
+                user.getId(),
                 user.getEmail(),
                 user.getFirstName(),
                 user.getEmail(),
                 user.getPassword(),
                 user.isLocked(),
                 user.isEnabled(),
-                authorities
+                authorities,
+                user.getUuid()
         );
     }
+
 }

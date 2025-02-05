@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 @Service
 @Slf4j
@@ -86,6 +87,10 @@ public class UserCreationService {
     public User findByEmail(String email) {
         return userCreationRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
+    }
+
+    public void save(User user) {
+        userCreationRepository.save(user);
     }
 
 }

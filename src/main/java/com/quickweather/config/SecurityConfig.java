@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
@@ -28,19 +29,27 @@ public class SecurityConfig {
         http.cors().and()
                 .csrf().disable()
                 .authorizeHttpRequests()
-                .requestMatchers("/api/v1/user/auth/login", "/api/v1/user/register").permitAll()
-//                .requestMatchers("/api/v1/admin/**").permitAll()
-//                .requestMatchers("/api/weather/**").permitAll()
-                .requestMatchers("/api/weather/city").permitAll()
+                .requestMatchers(
+                        "/api/v1/user/auth/login",
+                        "/api/v1/user/register",
+                        "/api/v1/user/auth/reset-password",
+                        "/api/v1/user/auth/set-new-password",
+                        "/api/weather/city"
+                ).permitAll()
+
                 .requestMatchers("/api/weather/current-with-user-history").authenticated()
+                .requestMatchers("/api/v1/user/auth/change-password").authenticated()
                 .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                 .requestMatchers("/api/v1/user/**").hasAnyRole("USER", "ADMIN")
-
                 .anyRequest().authenticated()
+                .and()
+                .sessionManagement()
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling()
-                .authenticationEntryPoint(authenticationEntryPoint()); // Custom entry point
+                .authenticationEntryPoint(authenticationEntryPoint());
+
         return http.build();
     }
 
@@ -58,5 +67,6 @@ public class SecurityConfig {
     public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
         return configuration.getAuthenticationManager();
     }
+
 
 }
