@@ -17,4 +17,5 @@ public interface OpenWeatherMapService {
     AirPollutionResponseDto getAirPollutionByCoordinates(double lat, double lon);
 
     WeatherForecastDailyResponseDto getWeatherForecastByCityAndDays(String city, int cnt);
+
 }

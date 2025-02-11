@@ -11,22 +11,19 @@ import com.quickweather.dto.weather.SimpleForecastDto;
 import com.quickweather.dto.weather.UserSearchHistoryResponse;
 import com.quickweather.dto.weather.WeatherResponse;
 import com.quickweather.dto.zipcode.WeatherByZipCodeResponseDto;
-import com.quickweather.entity.UserSearchHistory;
+import com.quickweather.exceptions.WeatherErrorType;
+import com.quickweather.exceptions.WeatherServiceException;
 import com.quickweather.repository.UserSearchHistoryRepository;
 import com.quickweather.service.accuweather.AccuWeatherServiceImpl;
 import com.quickweather.service.openweathermap.OpenWeatherServiceImpl;
 import com.quickweather.service.openweathermap.UserSearchHistoryService;
 import com.quickweather.service.user.CustomUserDetails;
-import io.jsonwebtoken.Jwt;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -117,12 +114,18 @@ public class WeatherController {
                 .collect(Collectors.toList());
     }
 
-    @GetMapping("/air-quality")
-    public AirPollutionResponseDto getAirPollutionByCoordinates(
-            @RequestParam @Min(value = -90, message = "Latitude must be between -90 and 90")
-            @Max(value = 90, message = "Latitude must be between -90 and 90") double lat,
-            @RequestParam @Min(value = -180, message = "Longitude must be between -180 and 180")
-            @Max(value = 180, message = "Longitude must be between -180 and 180") double lon) {
+    @GetMapping("/city/air-quality")
+    public AirPollutionResponseDto getAirPollutionByCity(
+            @RequestParam @NotBlank(message = "City name cannot be blank") String city) {
+        WeatherResponse weatherResponse = currentWeatherService.getCurrentWeatherByCity(city);
+
+        if (weatherResponse.getCoord() == null) {
+            throw new WeatherServiceException(WeatherErrorType.DATA_NOT_FOUND, "Missing coordinate data for city: " + city);
+        }
+        double lat = weatherResponse.getCoord().getLat();
+        double lon = weatherResponse.getCoord().getLon();
+
+        // Pobierz dane o zanieczyszczeniu powietrza przy użyciu współrzędnych
         return currentWeatherService.getAirPollutionByCoordinates(lat, lon);
     }
 

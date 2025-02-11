@@ -6,8 +6,6 @@ import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
-import jakarta.annotation.PostConstruct;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
@@ -86,6 +84,8 @@ public class JwtUtil {
 
     public boolean validateResetToken(String token) {
         try {
+            log.info("Validating reset token: '{}'", token);
+
             Claims claims = Jwts.parserBuilder()
                     .setSigningKey(resetKey)
                     .build()
@@ -94,6 +94,9 @@ public class JwtUtil {
 
             String type = claims.get("type", String.class);
             Date expiration = claims.getExpiration();
+
+            log.info("Extracted type: {}", type);
+            log.info("Token expiration time: {}", expiration);
 
             return "reset-password".equals(type) && expiration.after(new Date());
         } catch (JwtException e) {
@@ -106,6 +109,20 @@ public class JwtUtil {
         try {
             return Jwts.parserBuilder()
                     .setSigningKey(secretKey)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody()
+                    .getSubject();
+        } catch (JwtException e) {
+            log.error("Failed to extract username from token: {}", e.getMessage());
+            throw e;
+        }
+    }
+
+    public String extractUsernameFromResetToken(String token) {
+        try {
+            return Jwts.parserBuilder()
+                    .setSigningKey(resetKey)
                     .build()
                     .parseClaimsJws(token)
                     .getBody()
@@ -142,7 +159,22 @@ public class JwtUtil {
     public String extractTokenForType(String token) {
         try {
             Claims claims = Jwts.parserBuilder()
-                    .setSigningKey(secretKey) // Klucz weryfikujący podpis
+                    .setSigningKey(resetKey) // Klucz weryfikujący podpis
+                    .build()
+                    .parseClaimsJws(token) // Parsowanie tokena
+                    .getBody(); // Pobranie części payload
+
+            return claims.get("type", String.class); // Wyciągnięcie wartości claim "type"
+        } catch (JwtException e) {
+            log.error("Invalid token: {}", e.getMessage());
+            return null; // Zwrot null w przypadku błędnego tokena
+        }
+    }
+
+    public String extractResetTokenForType(String token) {
+        try {
+            Claims claims = Jwts.parserBuilder()
+                    .setSigningKey(resetKey) // Klucz weryfikujący podpis
                     .build()
                     .parseClaimsJws(token) // Parsowanie tokena
                     .getBody(); // Pobranie części payload

@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -31,7 +32,7 @@ public class UserSearchHistoryService {
     private final ObjectMapper objectMapper;
 
     public List<UserSearchHistoryResponse> getUserSearchHistory(Long userId, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
+        Pageable pageable = PageRequest.of(page, size, Sort.by("searchedAt").descending());
         // Pobierz historię użytkownika z bazy danych
         Page<UserSearchHistory> history = userSearchHistoryRepository.findByUserId(userId, pageable);
 

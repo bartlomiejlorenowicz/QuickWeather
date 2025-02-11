@@ -121,16 +121,18 @@ public class UserAuthenticationController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to send email");
         }
 
-        return ResponseEntity.ok("Password reset link sent");
+        return ResponseEntity.ok(Map.of("message", "Password reset link sent"));
     }
 
     @PostMapping("/validate-reset-token")
-    public ResponseEntity<?> validateResetToken(@RequestParam String token) {
+    public ResponseEntity<?> validateResetToken(@RequestBody Map<String, String> request) {
+        String token = request.get("token");
+        log.info("Validating reset token: '{}'", token);
         try {
-            if (!jwtUtil.validateToken(token)) {
+            if (!jwtUtil.validateResetToken(token)) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid or expired token");
             }
-            String tokenType = jwtUtil.extractTokenForType(token);
+            String tokenType = jwtUtil.extractResetTokenForType(token);
             log.info("Validating token: {}", token);
 
             if (!RESET_PASSWORD_TOKEN_TYPE.equals(tokenType)) {
@@ -150,7 +152,7 @@ public class UserAuthenticationController {
         }
 
         // Pobierz użytkownika na podstawie tokena
-        String email = jwtUtil.extractUsername(request.getToken());
+        String email = jwtUtil.extractUsernameFromResetToken(request.getToken());
         User user = userCreationService.findByEmail(email);
         log.info("User found: {}", user != null ? user.getEmail() : "null");
 
@@ -184,6 +186,33 @@ public class UserAuthenticationController {
                 "message", "Password changed successfully. Please log in again."
         ));
     }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> request) {
+        String email = request.get("email");
+        log.info("Password reset requested for: {}", email);
+
+        User user = userCreationService.findByEmail(email);
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
+
+        String resetToken = jwtUtil.generateResetToken(user);
+        log.info("Generated reset token: {}", resetToken);
+
+        try {
+            Gmail service = new GmailQuickstart().getGmailService();
+            String resetLink = "http://localhost:4200/set-forgot-password?token=" + resetToken;
+            gmailQuickstart.sendEmail(service, user.getEmail(), "Password Reset Request",
+                    "Click the link to reset your password: " + resetLink);
+        } catch (Exception e) {
+            log.error("Error sending email: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to send email");
+        }
+
+        return ResponseEntity.ok(Map.of("message", "Password reset link sent"));
+    }
+
 
 
 }

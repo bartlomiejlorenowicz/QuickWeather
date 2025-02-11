@@ -1,6 +1,5 @@
 package com.quickweather.security;
 
-import com.quickweather.service.user.CustomUserDetails;
 import com.quickweather.service.user.CustomUserDetailsService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -8,7 +7,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
@@ -28,7 +26,8 @@ public class JwtFilter extends OncePerRequestFilter {
             "/api/v1/user/auth/login",
             "/api/v1/user/register",
             "/api/v1/user/auth/reset-password",
-            "/api/v1/user/auth/set-new-password"
+            "/api/v1/user/auth/set-new-password",
+            "/api/v1/user/auth/forgot-password"
     );
 
     public JwtFilter(JwtUtil jwtUtil, CustomUserDetailsService userDetailsService) {
@@ -39,6 +38,13 @@ public class JwtFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
+
+        String path = request.getServletPath();
+        // Jeśli endpoint jest publiczny, pomiń weryfikację tokena
+        if (PUBLIC_ENDPOINTS.contains(path)) {
+            chain.doFilter(request, response);
+            return;
+        }
 
         String token = extractToken(request);
         log.info("Token from request: {}", token);

@@ -32,9 +32,13 @@ public class SecurityConfig {
                 .requestMatchers(
                         "/api/v1/user/auth/login",
                         "/api/v1/user/register",
+                        "/api/v1/user/auth/validate-reset-token",
                         "/api/v1/user/auth/reset-password",
                         "/api/v1/user/auth/set-new-password",
-                        "/api/weather/city"
+                        "/api/weather/city",
+                        "/api/weather/forecast",
+                        "/api/v1/user/auth/forgot-password",
+                        "/api/weather/city/air-quality",
                 ).permitAll()
 
                 .requestMatchers("/api/weather/current-with-user-history").authenticated()

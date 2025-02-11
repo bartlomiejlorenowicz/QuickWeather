@@ -157,4 +157,6 @@ public class OpenWeatherServiceImpl extends WeatherServiceBase implements OpenWe
         URI url = UriBuilderUtils.buildUri(apiUrl, "forecast", queryParams);
         return fetchWeatherData(url, WeatherForecastDailyResponseDto.class, city + "," + cnt);
     }
+
+
 }
