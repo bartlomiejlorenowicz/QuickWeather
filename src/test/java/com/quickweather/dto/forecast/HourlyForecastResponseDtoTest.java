@@ -1,13 +1,14 @@
 package com.quickweather.dto.forecast;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.quickweather.dto.location.City;
+import com.quickweather.dto.weatherDtos.location.City;
+import com.quickweather.dto.weatherDtos.forecast.ForecastItem;
+import com.quickweather.dto.weatherDtos.forecast.HourlyForecastResponseDto;
 import org.junit.Test;
 
 import java.io.File;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
 
 class HourlyForecastResponseDtoTest {
 

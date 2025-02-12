@@ -97,6 +97,14 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
     }
 
+    @ExceptionHandler(EmailSendingException.class)
+    public ResponseEntity<Map<String, String>> handleEmailSendingException(EmailSendingException ex) {
+        Map<String, String> response = new HashMap<>();
+        response.put("message", ex.getMessage());
+        response.put("errorType", "EMAIL_SENDING_ERROR");
+        response.put("timestamp", LocalDateTime.now().toString());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+    }
 
     private HttpStatus mapErrorTypeToHttpStatus(WeatherErrorType weatherErrorType) {
 

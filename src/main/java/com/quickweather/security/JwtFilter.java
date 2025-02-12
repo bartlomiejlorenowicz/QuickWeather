@@ -39,6 +39,12 @@ public class JwtFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
 
+        // Pomiń przetwarzanie tokena dla zapytań OPTIONS
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            chain.doFilter(request, response);
+            return;
+        }
+
         String path = request.getServletPath();
         // Jeśli endpoint jest publiczny, pomiń weryfikację tokena
         if (PUBLIC_ENDPOINTS.contains(path)) {

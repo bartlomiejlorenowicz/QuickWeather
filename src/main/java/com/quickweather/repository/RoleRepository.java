@@ -1,7 +1,7 @@
 package com.quickweather.repository;
 
-import com.quickweather.entity.Role;
-import com.quickweather.entity.RoleType;
+import com.quickweather.domain.Role;
+import com.quickweather.domain.RoleType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

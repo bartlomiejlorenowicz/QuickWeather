@@ -1,11 +1,11 @@
 package com.quickweather.service.accuweather;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.quickweather.dto.accuweather.AccuWeatherDailyDtos;
-import com.quickweather.dto.accuweather.AccuWeatherDailyResponse;
-import com.quickweather.dto.accuweather.AccuWeatherResponse;
+import com.quickweather.dto.weatherDtos.accuweather.AccuWeatherDailyDtos;
+import com.quickweather.dto.weatherDtos.accuweather.AccuWeatherDailyResponse;
+import com.quickweather.dto.weatherDtos.accuweather.AccuWeatherResponse;
 import com.quickweather.repository.WeatherApiResponseRepository;
-import com.quickweather.service.weatherbase.WeatherServiceBase;
+import com.quickweather.service.weather.WeatherServiceBase;
 import com.quickweather.utils.UriBuilderUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;

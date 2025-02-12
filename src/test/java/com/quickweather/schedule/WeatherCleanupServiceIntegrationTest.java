@@ -2,12 +2,12 @@ package com.quickweather.schedule;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.quickweather.entity.ApiSource;
-import com.quickweather.entity.WeatherApiResponse;
-import com.quickweather.entity.WeatherApiResponseHistory;
+import com.quickweather.domain.ApiSource;
+import com.quickweather.domain.WeatherApiResponse;
+import com.quickweather.domain.WeatherApiResponseHistory;
 import com.quickweather.repository.WeatherApiResponseHistoryRepository;
 import com.quickweather.repository.WeatherApiResponseRepository;
-import com.quickweather.validator.IntegrationTestConfig;
+import com.quickweather.validation.IntegrationTestConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

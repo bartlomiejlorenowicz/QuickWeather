@@ -1,6 +1,6 @@
 package com.quickweather.service.accuweather;
 
-import com.quickweather.dto.accuweather.AccuWeatherResponse;
+import com.quickweather.dto.weatherDtos.accuweather.AccuWeatherResponse;
 
 import java.util.List;
 

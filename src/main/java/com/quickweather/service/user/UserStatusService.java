@@ -1,7 +1,7 @@
 package com.quickweather.service.user;
 
 import com.quickweather.dto.user.UserId;
-import com.quickweather.entity.User;
+import com.quickweather.domain.User;
 import com.quickweather.exceptions.UserErrorType;
 import com.quickweather.exceptions.UserValidationException;
 import com.quickweather.repository.UserRepository;
@@ -13,37 +13,34 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class UserStatusService {
 
-    private final UserRepository userCreationRepository;
+    private final UserRepository userRepository;
+    private final UserCrudService userCrudService;
 
-    public UserStatusService(UserRepository userCreationRepository) {
-        this.userCreationRepository = userCreationRepository;
+    public UserStatusService(UserRepository userCreationRepository, UserCrudService userCrudService) {
+        this.userRepository = userCreationRepository;
+        this.userCrudService = userCrudService;
     }
 
     @Transactional
     public void enableUser(UserId userId) {
-        User user = findUserById(userId.getValue());
+        User user = userCrudService.findById(userId.getValue());
         if (user.isEnabled()) {
             throw new UserValidationException(UserErrorType.ACCOUNT_ENABLED, "User is already enabled");
         }
         user.setEnabled(true);
-        userCreationRepository.save(user);
+        userRepository.save(user);
         log.info("User with ID {} has been enabled", userId);
     }
 
     @Transactional
-    public void disabledUser(UserId userId) {
-        User user = findUserById(userId.getValue());
+    public void disableUser(UserId userId) {
+        User user = userCrudService.findById(userId.getValue());
         if (!user.isEnabled()) {
             throw new UserValidationException(UserErrorType.ACCOUNT_DISABLED, "User is already disabled");
         }
         user.setEnabled(false);
-        userCreationRepository.save(user);
+        userRepository.save(user);
         log.info("User with ID {} has been disabled", userId);
-    }
-
-    private User findUserById(Long userId) {
-        return userCreationRepository.findById(userId)
-                .orElseThrow(() -> new UserValidationException(UserErrorType.INVALID_EMAIL, "User not found"));
     }
 
 }
