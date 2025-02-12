@@ -1,7 +1,7 @@
 package com.quickweather.repository;
 
-import com.quickweather.entity.User;
-import com.quickweather.entity.UserSearchHistory;
+import com.quickweather.domain.User;
+import com.quickweather.domain.UserSearchHistory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

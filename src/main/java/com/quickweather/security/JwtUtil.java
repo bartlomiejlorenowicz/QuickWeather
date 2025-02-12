@@ -1,5 +1,5 @@
 package com.quickweather.security;
-import com.quickweather.entity.User;
+import com.quickweather.domain.User;
 import com.quickweather.service.user.CustomUserDetails;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
@@ -36,7 +36,7 @@ public class JwtUtil {
         String token = Jwts.builder()
                 .setHeaderParam("type", "JWT")
                 .setSubject(userDetails.getEmail())
-                .claim("userId", Long.valueOf(userDetails.getUserId()))
+                .claim("userId", userDetails.getUserId())
                 .claim("name", userDetails.getName())
                 .claim("email", userDetails.getEmail())
                 .claim("uuid", uuid.toString())
@@ -45,7 +45,7 @@ public class JwtUtil {
                         .toList())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + expirationTime))
-                .signWith(secretKey, SignatureAlgorithm.HS256) // Podpi-s tokena
+                .signWith(secretKey, SignatureAlgorithm.HS256)
                 .compact();
 
         log.info("User authorities: {}", userDetails.getAuthorities());
@@ -71,10 +71,7 @@ public class JwtUtil {
 
     public boolean validateToken(String token) {
         try {
-            Jwts.parserBuilder()
-                    .setSigningKey(secretKey)
-                    .build()
-                    .parseClaimsJws(token);
+            parseClaims(token, secretKey);
             return true;
         } catch (JwtException e) {
             log.error("Invalid JWT token: {}", e.getMessage());
@@ -84,14 +81,7 @@ public class JwtUtil {
 
     public boolean validateResetToken(String token) {
         try {
-            log.info("Validating reset token: '{}'", token);
-
-            Claims claims = Jwts.parserBuilder()
-                    .setSigningKey(resetKey)
-                    .build()
-                    .parseClaimsJws(token)
-                    .getBody();
-
+            Claims claims = parseClaims(token, resetKey);
             String type = claims.get("type", String.class);
             Date expiration = claims.getExpiration();
 
@@ -106,69 +96,11 @@ public class JwtUtil {
     }
 
     public String extractUsername(String token) {
-        try {
-            return Jwts.parserBuilder()
-                    .setSigningKey(secretKey)
-                    .build()
-                    .parseClaimsJws(token)
-                    .getBody()
-                    .getSubject();
-        } catch (JwtException e) {
-            log.error("Failed to extract username from token: {}", e.getMessage());
-            throw e;
-        }
+        return parseClaims(token, secretKey).getSubject();
     }
 
     public String extractUsernameFromResetToken(String token) {
-        try {
-            return Jwts.parserBuilder()
-                    .setSigningKey(resetKey)
-                    .build()
-                    .parseClaimsJws(token)
-                    .getBody()
-                    .getSubject();
-        } catch (JwtException e) {
-            log.error("Failed to extract username from token: {}", e.getMessage());
-            throw e;
-        }
-    }
-
-    public List<String> extractRoles(String token) {
-        try {
-            Object roles = Jwts.parserBuilder()
-                    .setSigningKey(secretKey)
-                    .build()
-                    .parseClaimsJws(token)
-                    .getBody()
-                    .get("roles");
-
-            // Bezpieczna konwersja JSON array na List<String>
-            if (roles instanceof List<?> rolesList) {
-                return rolesList.stream()
-                        .map(Object::toString) // Konwersja elementów do String
-                        .toList();
-            }
-
-            return List.of(); // Jeśli roles nie istnieje, zwróć pustą listę
-        } catch (JwtException e) {
-            log.error("Failed to extract roles from token: {}", e.getMessage());
-            throw e;
-        }
-    }
-
-    public String extractTokenForType(String token) {
-        try {
-            Claims claims = Jwts.parserBuilder()
-                    .setSigningKey(resetKey) // Klucz weryfikujący podpis
-                    .build()
-                    .parseClaimsJws(token) // Parsowanie tokena
-                    .getBody(); // Pobranie części payload
-
-            return claims.get("type", String.class); // Wyciągnięcie wartości claim "type"
-        } catch (JwtException e) {
-            log.error("Invalid token: {}", e.getMessage());
-            return null; // Zwrot null w przypadku błędnego tokena
-        }
+        return parseClaims(token, resetKey).getSubject();
     }
 
     public String extractResetTokenForType(String token) {
@@ -186,41 +118,28 @@ public class JwtUtil {
         }
     }
 
-    public Long extractUserId(String token) {
+    public List<String> extractRoles(String token) {
+        Claims claims = parseClaims(token, secretKey);
+        Object roles = claims.get("roles");
+        if (roles instanceof List<?> rolesList) {
+            return rolesList.stream()
+                    .map(Object::toString)
+                    .toList();
+        }
+        return List.of();
+    }
+
+    private Claims parseClaims(String token, SecretKey key) {
         try {
-            Claims claims = Jwts.parserBuilder()
-                    .setSigningKey(secretKey)
+            return Jwts.parserBuilder()
+                    .setSigningKey(key)
                     .build()
                     .parseClaimsJws(token)
                     .getBody();
-
-            Object userIdClaim = claims.get("userId");
-            if (userIdClaim instanceof String) {
-                return Long.parseLong((String) userIdClaim);
-            } else if (userIdClaim instanceof Number) {
-                return ((Number) userIdClaim).longValue();
-            } else {
-                throw new JwtException("Invalid userId type in token");
-            }
         } catch (JwtException e) {
-            log.error("Failed to extract userId from token: {}", e.getMessage());
+            log.error("Failed to parse token: {}", e.getMessage());
             throw e;
         }
     }
-
-    public String extractUuid(String token) {
-        try {
-            Claims claims = Jwts.parserBuilder()
-                    .setSigningKey(secretKey)
-                    .build()
-                    .parseClaimsJws(token)
-                    .getBody();
-            return claims.get("uuid", String.class);
-        } catch (JwtException e) {
-            log.error("Failed to extract UUID from token: {}", e.getMessage());
-            throw e;
-        }
-    }
-
 
 }

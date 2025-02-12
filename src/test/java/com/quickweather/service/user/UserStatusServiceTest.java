@@ -1,7 +1,7 @@
 package com.quickweather.service.user;
 
 import com.quickweather.dto.user.UserId;
-import com.quickweather.entity.User;
+import com.quickweather.domain.User;
 import com.quickweather.exceptions.UserValidationException;
 import com.quickweather.repository.UserRepository;
 import org.junit.jupiter.api.Test;
@@ -65,7 +65,7 @@ class UserStatusServiceTest {
 
         when(userCreationRepository.findById(1L)).thenReturn(Optional.of(user));
 
-        assertDoesNotThrow(() -> userStatusService.disabledUser(userId));
+        assertDoesNotThrow(() -> userStatusService.disableUser(userId));
         assertFalse(user.isEnabled());
         verify(userCreationRepository, times(1)).save(user);
     }
@@ -81,7 +81,7 @@ class UserStatusServiceTest {
 
         when(userCreationRepository.findById(1L)).thenReturn(Optional.of(user));
 
-        UserValidationException exception = assertThrows(UserValidationException.class, () -> userStatusService.disabledUser(userId));
+        UserValidationException exception = assertThrows(UserValidationException.class, () -> userStatusService.disableUser(userId));
         assertEquals("User is already disabled", exception.getMessage());
     }
 
@@ -91,7 +91,7 @@ class UserStatusServiceTest {
 
         when(userCreationRepository.findById(1L)).thenReturn(Optional.empty());
 
-        UserValidationException exception = assertThrows(UserValidationException.class, () -> userStatusService.disabledUser(userId));
+        UserValidationException exception = assertThrows(UserValidationException.class, () -> userStatusService.disableUser(userId));
         assertEquals("User not found", exception.getMessage());
     }
 }
