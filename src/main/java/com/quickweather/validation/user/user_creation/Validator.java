@@ -1,4 +1,4 @@
-package com.quickweather.validation;
+package com.quickweather.validation.user.user_creation;
 
 import com.quickweather.dto.user.UserDto;
 

@@ -215,7 +215,7 @@ class OpenWeatherServiceImplTest {
             URI uri = argument;
             return uri.toString().contains("zip=" + ZIPCODE + "," + COUNTRY_CODE)
                     && uri.toString().contains("appid=" + TEST_API_KEY)
-                    && uri.toString().contains("lang=pl");
+                    && uri.toString().contains("lang=en");
         }), eq(WeatherByZipCodeResponseDto.class));
     }
 

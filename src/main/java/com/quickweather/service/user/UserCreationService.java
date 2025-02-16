@@ -3,7 +3,9 @@ package com.quickweather.service.user;
 import com.quickweather.dto.user.UserDto;
 import com.quickweather.mapper.UserMapper;
 
-import com.quickweather.validation.UserValidator;
+import com.quickweather.repository.UserRepository;
+import com.quickweather.validation.user.user_creation.UserValidator;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -17,34 +19,22 @@ import java.util.HashSet;
  *   <li>Mapping a {@link UserDto} to a User entity via {@link UserMapper}</li>
  *   <li>Encoding the user's password with {@link PasswordEncoder}</li>
  *   <li>Assigning default roles using {@link UserRoleService}</li>
- *   <li>Saving the new user to the database via {@link UserCrudService}</li>
+ *   <li>Saving the new user to the database via {@link UserSearchService}</li>
  *   <li>Sending a welcome email via {@link UserNotificationService}</li>
  * </ul>
  */
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class UserCreationService {
 
     private final UserValidator validator;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
-    private final UserCrudService userCrudService;
+    private final UserRepository userRepository;
     private final UserRoleService userRoleService;
     private final UserNotificationService userNotificationService;
 
-    public UserCreationService(UserValidator validator,
-                               UserMapper userMapper,
-                               PasswordEncoder passwordEncoder,
-                               UserCrudService userCrudService,
-                               UserRoleService userRoleService,
-                               UserNotificationService userNotificationService) {
-        this.validator = validator;
-        this.userMapper = userMapper;
-        this.passwordEncoder = passwordEncoder;
-        this.userCrudService = userCrudService;
-        this.userRoleService = userRoleService;
-        this.userNotificationService = userNotificationService;
-    }
 
     /**
      * Validates and creates a new user, assigns a default role,
@@ -67,7 +57,7 @@ public class UserCreationService {
 
         // Save user in database
         log.info("Saving User entity to database: {}", userEntity);
-        userCrudService.save(userEntity);
+        userRepository.save(userEntity);
         log.info("User is saved with roles: {}", userEntity.getRoles());
 
         // Send welcome email

@@ -5,37 +5,34 @@ import com.quickweather.domain.User;
 import com.quickweather.dto.user.user_auth.SetNewPasswordRequest;
 import com.quickweather.exceptions.EmailSendingException;
 import com.quickweather.integration.GmailQuickstart;
+import com.quickweather.repository.UserRepository;
 import com.quickweather.security.JwtUtil;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.util.UriComponentsBuilder;
+
+import static java.util.Objects.isNull;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class PasswordResetService {
 
-    private final UserCrudService userCrudService;
+    private final UserSearchService userSearchService;
     private final JwtUtil jwtUtil;
     private final GmailQuickstart gmailQuickstart;
     private final PasswordEncoder passwordEncoder;
-    private final String RESET_EMAIL_SUBJECT = "Password Reset Request";
-    private final String CONTENT_EMAIL = "Click the link to reset your password: ";
+    private final UserRepository userRepository;
+    private static final String RESET_EMAIL_SUBJECT = "Password Reset Request";
+    private static final String CONTENT_EMAIL = "Click the link to reset your password: ";
 
     @Value("${app.frontend.base-url:http://localhost:4200}")
     private String frontendBaseUrl;
-
-    public PasswordResetService(UserCrudService userCrudService,
-                                JwtUtil jwtUtil,
-                                GmailQuickstart gmailQuickstart,
-                                PasswordEncoder passwordEncoder) {
-        this.userCrudService = userCrudService;
-        this.jwtUtil = jwtUtil;
-        this.gmailQuickstart = gmailQuickstart;
-        this.passwordEncoder = passwordEncoder;
-    }
 
     public void resetPasswordUsingToken(SetNewPasswordRequest request) {
         // Walidacja tokena resetu
@@ -45,10 +42,10 @@ public class PasswordResetService {
 
         // Pobierz użytkownika na podstawie tokena
         String email = jwtUtil.extractUsernameFromResetToken(request.getToken());
-        User user = userCrudService.findByEmail(email);
+        User user = userSearchService.findByEmail(email);
         log.info("User found: {}", user != null ? user.getEmail() : "null");
 
-        if (user == null) {
+        if (isNull(user)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found.");
         }
 
@@ -59,14 +56,18 @@ public class PasswordResetService {
 
         // Zmień hasło
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
-        userCrudService.save(user);
+        userRepository.save(user);
     }
 
     public void sendPasswordResetEmail(String email, String resetPath) {
 
-        User user = userCrudService.findByEmail(email);
+        User user = userSearchService.findByEmail(email);
+
         String resetToken = jwtUtil.generateResetToken(user);
-        String resetLink = frontendBaseUrl + resetPath + "?token=" + resetToken;
+        String resetLink = UriComponentsBuilder.fromHttpUrl(frontendBaseUrl)
+                .path(resetPath)
+                .queryParam("token", resetToken)
+                .toUriString();
 
         try {
             Gmail service = gmailQuickstart.getGmailService();

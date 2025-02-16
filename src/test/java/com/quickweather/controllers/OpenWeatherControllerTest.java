@@ -5,10 +5,12 @@ import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import com.quickweather.domain.Role;
 import com.quickweather.domain.RoleType;
 import com.quickweather.domain.User;
+import com.quickweather.exceptions.UserNotFoundException;
 import com.quickweather.repository.RoleRepository;
 import com.quickweather.repository.UserRepository;
 import com.quickweather.security.JwtTestUtil;
 import com.quickweather.security.TestConfig;
+import com.quickweather.service.user.UserRoleService;
 import com.quickweather.validation.IntegrationTestConfig;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,6 +24,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Set;
@@ -47,45 +50,35 @@ class OpenWeatherControllerTest extends IntegrationTestConfig {
     @Autowired
     private JwtTestUtil jwtTestUtil;
 
+    @Autowired
+    private UserRoleService userRoleService;
+
     private String tokenUser;
-    private String tokenAdmin;
 
     @Autowired
     private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
-        // Inicjalizacja ról w bazie, jeśli nie istnieją
-        if (!roleRepository.existsByRoleType(RoleType.USER)) {
-            Role userRole = Role.builder().roleType(RoleType.USER).build();
-            roleRepository.save(userRole);
-        }
-        if (!roleRepository.existsByRoleType(RoleType.ADMIN)) {
-            Role adminRole = Role.builder().roleType(RoleType.ADMIN).build();
-            roleRepository.save(adminRole);
-        }
+        userRepository.deleteAll();
+        roleRepository.deleteAll();
 
-        Role userRole = roleRepository.findByRoleType(RoleType.USER)
-                .orElseThrow(() -> new IllegalStateException("USER role not initialized in the database"));
+        Set<Role> roles = new java.util.HashSet<>();
+        userRoleService.assignDefaultUserRole(roles);
 
-        Role adminRole = roleRepository.findByRoleType(RoleType.ADMIN)
-                .orElseThrow(() -> new IllegalStateException("ADMIN role not initialized in the database"));
-
-        // Utworzenie użytkownika
         User user = User.builder()
                 .firstName("Adam")
                 .lastName("Nowak")
                 .email("testUser@wp.pl")
                 .password(passwordEncoder.encode("testPassword"))
                 .isEnabled(true)
-                .roles(Set.of(userRole, adminRole))
+                .roles(roles)
                 .build();
 
         userRepository.save(user);
 
         // Generowanie tokenów JWT
         tokenUser = jwtTestUtil.generateToken(user.getEmail(), "ROLE_USER");
-        tokenAdmin = jwtTestUtil.generateToken("adminUser", "ROLE_ADMIN");
     }
 
     @AfterEach
@@ -97,7 +90,7 @@ class OpenWeatherControllerTest extends IntegrationTestConfig {
     @Value("${open.weather.api.key}")
     private String apiKey;
 
-    private final String url = "/api/weather";
+    private final String url = "/api/v1/weather";
 
     @Test
     void shouldReturnWeatherData_WhenCityIsValid() throws Exception {
@@ -117,8 +110,8 @@ class OpenWeatherControllerTest extends IntegrationTestConfig {
                         .param("city", "London")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.main.temp").value(15.0))
-                .andExpect(jsonPath("$.weather[0].description").value("sunny"))
+                .andExpect(jsonPath("$.main.temp").value(2.48))
+                .andExpect(jsonPath("$.weather[0].description").value("overcast clouds"))
                 .andExpect(jsonPath("$.name").value("London"));
     }
 
@@ -161,25 +154,23 @@ class OpenWeatherControllerTest extends IntegrationTestConfig {
                         .withHeader("Content-Type", "application/json")
                         .withStatus(200)));
 
-        mockMvc.perform(MockMvcRequestBuilders.get("/api/weather/zipcode")
-                        .header("Authorization", "Bearer " + tokenUser)
+        mockMvc.perform(MockMvcRequestBuilders.get(url + "/zipcode")
                         .param("zipcode", "37-203")
                         .param("countryCode", "pl")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.sys.country").value("PL"))
-                .andExpect(jsonPath("$.weather[0].description").value("clear sky"));
+                .andExpect(jsonPath("$.main.pressure").value(1023))
+                .andExpect(jsonPath("$.weather[0].description").value("overcast clouds"));
     }
 
     @Test
     void shouldReturnBadRequest_WhenCountryCodeIsInvalid() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.get(url + "/zipcode")
-                        .header("Authorization", "Bearer " + tokenUser)
                         .param("zipcode", "37-203")
                         .param("countryCode", "1111")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("Country  code must be 2 letters"));
+                .andExpect(jsonPath("$.message").value("Country code must be 2 letters"));
     }
 
     @Test
@@ -217,67 +208,42 @@ class OpenWeatherControllerTest extends IntegrationTestConfig {
     }
 
     @Test
-    void shouldReturnAirPollutionData_WhenCoordinatesAreValid() throws Exception {
-        String responseDto = new String(Files.readAllBytes(Paths.get("src/test/resources/app/responses/air_pollution_response.json")));
+    void shouldReturnAirPollutionData_WhenCityValid() throws Exception {
+        String weatherResponse = new String(Files.readAllBytes(Paths.get("src/test/resources/app/responses/current_weather.json")));
+        stubFor(WireMock.get(urlPathEqualTo("/data/2.5/weather"))
+                .withQueryParam("q", equalTo("London"))
+                .withQueryParam("appid", equalTo(apiKey))
+                .withQueryParam("units", equalTo("metric"))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "application/json")
+                        .withBody(weatherResponse)
+                        .withStatus(200)));
 
+        String responseDto = new String(Files.readAllBytes(Paths.get("src/test/resources/app/responses/air_pollution_response.json")));
         stubFor(WireMock.get(urlPathEqualTo("/data/2.5/air_pollution"))
-                .withQueryParam("lat", equalTo("50.0"))
-                .withQueryParam("lon", equalTo("50.0"))
+                .withQueryParam("lat", equalTo("51.5085"))
+                .withQueryParam("lon", equalTo("-0.1257"))
                 .withQueryParam("appid", equalTo(apiKey))
                 .willReturn(aResponse()
                         .withHeader("Content-Type", "application/json")
                         .withBody(responseDto)
                         .withStatus(200)));
 
-        mockMvc.perform(MockMvcRequestBuilders.get(url + "/air-quality")
+        mockMvc.perform(MockMvcRequestBuilders.get(url + "/city/air-quality")
                         .header("Authorization", "Bearer " + tokenUser)
-                        .param("lat", "50.0")
-                        .param("lon", "50.0")
+                        .param("city", "London")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.list[0].main.aqi").value(2.0));
     }
 
     @Test
-    void shouldReturnBadRequest_WhenLatitudeIsEmpty() throws Exception {
-        mockMvc.perform(MockMvcRequestBuilders.get(url + "/air-quality")
-                        .header("Authorization", "Bearer " + tokenUser)
-                        .param("lat", "")
-                        .param("lon", "50.0")
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("Failed to convert value of parameter 'lat' to required type 'double'"));
-    }
-
-    @Test
-    void shouldReturnBadRequest_WhenLatitudeIsOutOfBounds() throws Exception {
-        mockMvc.perform(MockMvcRequestBuilders.get(url + "/air-quality")
-                        .header("Authorization", "Bearer " + tokenUser)
-                        .param("lat", "-91")
-                        .param("lon", "50.0")
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("Latitude must be between -90 and 90"));
-    }
-
-    @Test
-    void shouldReturnBadRequest_WhenLongitudeIsOutOfBounds() throws Exception {
-        mockMvc.perform(MockMvcRequestBuilders.get(url + "/air-quality")
-                        .header("Authorization", "Bearer " + tokenUser)
-                        .param("lat", "50.0")
-                        .param("lon", "181")
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("Longitude must be between -180 and 180"));
-    }
-
-    @Test
-    void shouldReturnForecastByCityAndDays_WhenParametersAreValid() throws Exception {
+    void shouldReturnForecastByCityAndDays_WhenParametersValid() throws Exception {
         String responseDto = new String(Files.readAllBytes(Paths.get("src/test/resources/app/responses/forecast_by_city_and_by_days.json")));
 
         stubFor(WireMock.get(urlPathEqualTo("/data/2.5/forecast"))
-                .withQueryParam("q", equalTo("London"))
-                .withQueryParam("cnt", equalTo("2"))
+                .withQueryParam("q", equalTo("Warsaw"))
+                .withQueryParam("cnt", equalTo("3"))
                 .withQueryParam("units", equalTo("metric"))
                 .withQueryParam("appid", equalTo(apiKey))
                 .willReturn(aResponse()
@@ -287,12 +253,96 @@ class OpenWeatherControllerTest extends IntegrationTestConfig {
 
         mockMvc.perform(MockMvcRequestBuilders.get(url + "/forecast/daily")
                         .header("Authorization", "Bearer " + tokenUser)
-                        .param("city", "London")
-                        .param("cnt", "2")
+                        .param("city", "Warsaw")
+                        .param("cnt", "3")
                         .param("units", "metric")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.list[0].temp.day").value(20.98))
-                .andExpect(jsonPath("$.list[1].temp.day").value(21.54));
+                .andExpect(jsonPath("$.list[0].main.temp").value(-2.34))
+                .andExpect(jsonPath("$.list[1].weather[0].main").value("Clouds"))
+                .andExpect(jsonPath("$.list[2].wind.speed").value(2.66));
     }
+
+    @Test
+    void shouldReturnWeatherByZipcode_whenParametersValid() throws Exception {
+        String responseJson = new String(Files.readAllBytes(Paths.get("src/test/resources/app/responses/current_weather_by_zipcode.json")));
+
+        stubFor(WireMock.get(urlPathEqualTo("/data/2.5/weather"))
+                .withQueryParam("zip", equalTo("37-203,pl"))
+                .withQueryParam("appid", equalTo(apiKey))
+                .withQueryParam("lang", equalTo("en"))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "application/json")
+                        .withBody(responseJson)
+                        .withStatus(200)));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/v1/weather/zipcode")
+                        .param("zipcode", "37-203")
+                        .param("countryCode", "pl")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.main.temp").value(-2.43))
+                .andExpect(jsonPath("$.weather[0].main").value("Clouds"))
+                .andExpect(jsonPath("$.weather[0].description").value("overcast clouds"))
+                .andExpect(jsonPath("$.wind.speed").value(2.75))
+                .andExpect(jsonPath("$.visibility").value(10000));
+    }
+
+    @Test
+    void shouldReturnWeatherResponse_whenParametersValid() throws Exception {
+        String responseJson = new String(Files.readAllBytes(Paths.get("src/test/resources/app/responses/current_weather.json")));
+
+        stubFor(WireMock.get(urlPathEqualTo("/data/2.5/weather"))
+                .withQueryParam("lat", equalTo("51.5085"))
+                .withQueryParam("lon", equalTo("-0.1257"))
+                .withQueryParam("appid", equalTo(apiKey))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "application/json")
+                        .withBody(responseJson)
+                        .withStatus(200)));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/v1/weather/coordinate")
+                .param("lat", "51.5085")
+                .param("lon", "-0.1257")
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.main.temp").value(2.48))
+                .andExpect(jsonPath("$.weather[0].main").value("Clouds"))
+                .andExpect(jsonPath("$.visibility").value(10000));
+
+
+    }
+
+    @Test
+    void shouldReturnBadRequest_WhenLongitudeIsOutOfBounds() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.get(url + "/coordinate")
+                        .param("lat", "51.5085")
+                        .param("lon", "-181")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Longitude must be between -180 and 180"));
+
+    }
+
+    @Test
+    void shouldReturnBadRequest_WhenLongitudeIsEmpty() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.get(url + "/coordinate")
+                        .param("lat", "-91")
+                        .param("lon", "")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("coordinate Longitude is empty"));
+    }
+
+    @Test
+    void shouldReturnBadRequest_WhenLatitudeIsOutOfBounds() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.get(url + "/coordinate")
+                        .param("lat", "-91")
+                        .param("lon", "50.0")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Latitude must be between -90 and 90"));
+    }
+
+
 }

@@ -13,7 +13,6 @@ import com.quickweather.service.token.TokenValidationService;
 import com.quickweather.service.user.CustomUserDetails;
 import com.quickweather.service.user.PasswordResetService;
 import com.quickweather.service.user.PasswordService;
-import com.quickweather.service.user.UserCrudService;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -22,7 +21,6 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -34,24 +32,17 @@ public class UserAuthenticationController {
 
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
-    private final UserCrudService userCrudService;
-    private final PasswordEncoder passwordEncoder;
     private final PasswordService passwordService;
     private final PasswordResetService passwordResetService;
     private final TokenValidationService tokenValidationService;
 
-
     public UserAuthenticationController(AuthenticationManager authenticationManager,
                                         JwtUtil jwtUtil,
-                                        UserCrudService userCrudService,
-                                        PasswordEncoder passwordEncoder,
                                         PasswordService passwordService,
                                         PasswordResetService passwordResetService,
                                         TokenValidationService tokenValidationService) {
         this.authenticationManager = authenticationManager;
         this.jwtUtil = jwtUtil;
-        this.userCrudService = userCrudService;
-        this.passwordEncoder = passwordEncoder;
         this.passwordService = passwordService;
         this.passwordResetService = passwordResetService;
         this.tokenValidationService = tokenValidationService;

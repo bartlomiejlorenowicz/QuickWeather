@@ -1,15 +1,19 @@
 package com.quickweather.controllers;
 
 import com.quickweather.domain.Role;
-import com.quickweather.domain.RoleType;
 import com.quickweather.dto.user.UserDto;
 import com.quickweather.domain.User;
+import com.quickweather.repository.RoleRepository;
 import com.quickweather.repository.UserRepository;
+import com.quickweather.service.user.UserRoleService;
 import com.quickweather.validation.IntegrationTestConfig;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 
+import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
@@ -17,17 +21,36 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-
+@SpringBootTest
+@ActiveProfiles("local")
 class UserCreationControllerTest extends IntegrationTestConfig {
 
     private static final String REGISTER_URL = "/api/v1/user/register";
 
     @Autowired
+    private UserRoleService userRoleService;
+
+    @Autowired
     private UserRepository userCreationRepository;
+
+    @Autowired
+    private RoleRepository roleRepository;
+
 
     @BeforeEach
     void setUp() {
-        userCreationRepository.deleteAll(); // Clear database before each test
+        userCreationRepository.deleteAll();
+        roleRepository.deleteAll();
+
+        Set<Role> defaultRoles = new HashSet<>();
+        userRoleService.assignDefaultUserRole(defaultRoles);
+
+        defaultRoles.forEach(role -> {
+            if (!roleRepository.existsByRoleType(role.getRoleType())) {
+                roleRepository.save(role);
+            }
+        });
+
         User user = User.builder()
                 .firstName("Andy")
                 .lastName("Murphy")
@@ -41,7 +64,7 @@ class UserCreationControllerTest extends IntegrationTestConfig {
 
     @AfterEach
     void tearDown() {
-        userCreationRepository.deleteAll(); // Clean up database after each test
+        userCreationRepository.deleteAll();
     }
 
 

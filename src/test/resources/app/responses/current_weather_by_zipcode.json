@@ -1,10 +1,25 @@
 {
-  "sys": {
-    "country": "PL"
+  "main": {
+    "temp": -2.43,
+    "pressure": 1023,
+    "humidity": 71,
+    "feels_like": -6.17,
+    "temp_min": -2.43,
+    "temp_max": -2.43
   },
+  "visibility": 10000,
+  "wind": {
+    "speed": 2.75,
+    "deg": 306
+  },
+  "weatherDescription": "overcast clouds",
+  "weatherMain": "Clouds",
   "weather": [
     {
-      "description": "clear sky"
+      "id": 804,
+      "main": "Clouds",
+      "description": "overcast clouds",
+      "icon": "04n"
     }
   ]
 }

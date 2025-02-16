@@ -1,11 +1,27 @@
 {
   "main": {
-    "temp": 15.0
+    "temp": 2.48,
+    "feels_like": -0.97,
+    "temp_min": 1.67,
+    "temp_max": 3.67,
+    "pressure": 1025,
+    "humidity": 74
   },
   "weather": [
     {
-      "description": "sunny"
+      "main": "Clouds",
+      "description": "overcast clouds",
+      "icon": "04n"
     }
   ],
-  "name": "London"
+  "name": "London",
+  "coord": {
+    "lat": 51.5085,
+    "lon": -0.1257
+  },
+  "visibility": 10000,
+  "wind": {
+    "speed": 3.6,
+    "deg": 110
+  }
 }

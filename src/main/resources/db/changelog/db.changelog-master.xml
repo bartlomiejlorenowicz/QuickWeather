@@ -241,5 +241,38 @@
         <dropColumn tableName="weather_api_responses" columnName="user_search_history_id"/>
     </changeSet>
 
+    <changeSet id="015-create-email-templates" author="Bartek">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="email_templates" schemaName="public"/>
+            </not>
+        </preConditions>
+        <createTable tableName="email_templates" schemaName="public">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="template_code" type="VARCHAR(255)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="subject" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="body" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="016-insert-email-template" author="Bartek">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="email_templates"/>
+        </preConditions>
+        <insert tableName="email_templates">
+            <column name="template_code" value="WELCOME_EMAIL"/>
+            <column name="subject" value="Welcome to QuickWeather!"/>
+            <column name="body" value="Hi %s,&#10;Thank you for registering with QuickWeather. We hope you enjoy using our service!"/>
+        </insert>
+    </changeSet>
+
 
 </databaseChangeLog>

@@ -5,22 +5,14 @@ import com.quickweather.dto.weatherDtos.airpollution.AirPollutionResponseDto;
 import com.quickweather.dto.weatherDtos.forecast.HourlyForecastResponseDto;
 import com.quickweather.dto.weatherDtos.forecast.WeatherForecastDailyResponseDto;
 import com.quickweather.dto.weatherDtos.weather.SimpleForecastDto;
-import com.quickweather.dto.user.UserSearchHistoryResponse;
 import com.quickweather.dto.weatherDtos.weather.WeatherResponse;
 import com.quickweather.dto.weatherDtos.weather.WeatherByZipCodeResponseDto;
 import com.quickweather.exceptions.WeatherErrorType;
 import com.quickweather.exceptions.WeatherServiceException;
-import com.quickweather.repository.UserSearchHistoryRepository;
 import com.quickweather.service.accuweather.AccuWeatherServiceImpl;
 import com.quickweather.service.weather.OpenWeatherServiceImpl;
-import com.quickweather.service.weather.UserSearchHistoryService;
-import com.quickweather.service.user.CustomUserDetails;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -29,54 +21,17 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/weather")
+@RequestMapping("/api/v1/weather")
 @Validated
 public class WeatherController {
 
     private final OpenWeatherServiceImpl currentWeatherService;
-
     private final AccuWeatherServiceImpl accuWeatherService;
 
-    private final UserSearchHistoryRepository userSearchHistoryRepository;
-
-    private final UserSearchHistoryService userSearchHistoryService;
-
-    public WeatherController(OpenWeatherServiceImpl currentWeatherService,
-                             AccuWeatherServiceImpl accuWeatherService,
-                             UserSearchHistoryRepository userSearchHistoryRepository,
-                             UserSearchHistoryService userSearchHistoryService) {
+    public WeatherController(OpenWeatherServiceImpl currentWeatherService, AccuWeatherServiceImpl accuWeatherService) {
         this.currentWeatherService = currentWeatherService;
         this.accuWeatherService = accuWeatherService;
-        this.userSearchHistoryRepository = userSearchHistoryRepository;
-        this.userSearchHistoryService = userSearchHistoryService;
     }
-
-    @GetMapping("/current-with-user-history")
-    public WeatherResponse getWeatherWithHistory(@RequestParam Long userId,
-                                                 @RequestParam String city,
-                                                 @AuthenticationPrincipal CustomUserDetails userDetails) {
-
-        WeatherResponse response = getCurrentWeatherByCity(city);
-
-        if (userDetails != null) {
-            // Zalogowany użytkownik - zapisujemy dane w UserSearchHistory
-            userSearchHistoryService.saveSearchHistory(userId, city, response);
-        } else {
-            // Niezalogowany użytkownik - zapisujemy dane w WeatherApiResponseHistory
-            currentWeatherService.saveWeatherApiResponse(city, response);
-        }
-
-        // Zwracamy odpowiedź pogodową
-        return response;
-    }
-
-    @GetMapping("/history")
-    public List<UserSearchHistoryResponse> getUserSearchHistory(@RequestParam Long userId,
-                                                                @RequestParam(defaultValue = "0") int page,
-                                                                @RequestParam (defaultValue = "5") int size) {
-        return userSearchHistoryService.getUserSearchHistory(userId, page, size);
-    }
-
 
     @GetMapping("/city")
     public WeatherResponse getCurrentWeatherByCity(
@@ -88,27 +43,14 @@ public class WeatherController {
     @GetMapping("/zipcode")
     public WeatherByZipCodeResponseDto getCurrentWeatherByZipcode(
             @RequestParam String zipcode,
-            @RequestParam @Size(min = 2, max = 2, message = "Country  code must be 2 letters") String countryCode) {
+            @RequestParam @Size(min = 2, max = 2, message = "Country code must be 2 letters") String countryCode) {
         return currentWeatherService.getCurrentWeatherByZipcode(zipcode, countryCode);
     }
 
     @GetMapping("/forecast")
     public List<SimpleForecastDto> getForecast(
             @RequestParam @NotBlank(message = "City name cannot be blank") String city) {
-        HourlyForecastResponseDto forecast = currentWeatherService.get5DaysForecastEvery3Hours(city);
-
-        if (forecast == null || forecast.getList() == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Weather forecast not available for the given city");
-        }
-
-        // Mapowanie na uproszczony format
-        return forecast.getList().stream()
-                .map(item -> new SimpleForecastDto(
-                        item.getDt_txt(),
-                        item.getMain().getTemp(),
-                        item.getWind().getSpeed()
-                ))
-                .collect(Collectors.toList());
+        return currentWeatherService.getSimpleForecast(city);
     }
 
     @GetMapping("/city/air-quality")
@@ -132,6 +74,12 @@ public class WeatherController {
             @RequestParam @Min(value = 1, message = "Count must be at least 1")
             @Max(value = 16, message = "Count cannot be more than 16") int cnt) {
         return currentWeatherService.getWeatherForecastByCityAndDays(city, cnt);
+    }
+
+    @GetMapping("/coordinate")
+    public WeatherResponse getWeatherByCoordinates(@RequestParam String lat,
+                                                   @RequestParam String lon) {
+        return currentWeatherService.getCurrentWeatherByCoordinates(lat, lon);
     }
 
     @GetMapping("/postcode")

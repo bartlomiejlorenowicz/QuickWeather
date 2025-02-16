@@ -1,47 +1,76 @@
 {
-  "city": {
-    "id": 4517009,
-    "name": "London",
-    "country": "US"
-  },
+  "cnt": 3,
   "list": [
     {
-      "temp": {
-        "day": 20.98,
-        "min": 18.5,
-        "max": 23.1,
-        "night": 17.2,
-        "eve": 19.3,
-        "morn": 16.8
+      "main": {
+        "temp": -2.34,
+        "feels_like": -5.79,
+        "temp_min": -2.73,
+        "temp_max": -2.34,
+        "pressure": 1024,
+        "humidity": 76
       },
-      "pressure": 1019,
-      "humidity": 51,
+      "weather": [
+        {
+          "main": "Clouds",
+          "description": "scattered clouds",
+          "icon": "03n"
+        }
+      ],
+      "wind": {
+        "speed": 2.5,
+        "deg": 309
+      },
+      "visibility": 10000
+    },
+    {
+      "main": {
+        "temp": -2.63,
+        "feels_like": -6.76,
+        "temp_min": -2.87,
+        "temp_max": -2.63,
+        "pressure": 1024,
+        "humidity": 77
+      },
+      "weather": [
+        {
+          "main": "Clouds",
+          "description": "few clouds",
+          "icon": "02n"
+        }
+      ],
+      "wind": {
+        "speed": 3.11,
+        "deg": 305
+      },
+      "visibility": 10000
+    },
+    {
+      "main": {
+        "temp": -3.23,
+        "feels_like": -7.03,
+        "temp_min": -3.23,
+        "temp_max": -3.23,
+        "pressure": 1024,
+        "humidity": 74
+      },
       "weather": [
         {
           "main": "Clouds",
           "description": "scattered clouds",
           "icon": "03d"
         }
-      ]
-    },
-    {
-      "temp": {
-        "day": 21.54,
-        "min": 19.2,
-        "max": 24.0,
-        "night": 18.3,
-        "eve": 20.0,
-        "morn": 17.5
+      ],
+      "wind": {
+        "speed": 2.66,
+        "deg": 292
       },
-      "pressure": 1019,
-      "humidity": 52,
-      "weather": [
-        {
-          "main": "Clouds",
-          "description": "broken clouds",
-          "icon": "04d"
-        }
-      ]
+      "visibility": 10000
     }
-  ]
+  ],
+  "city": {
+    "id": 756135,
+    "name": "Warsaw",
+    "country": "PL"
+  }
 }

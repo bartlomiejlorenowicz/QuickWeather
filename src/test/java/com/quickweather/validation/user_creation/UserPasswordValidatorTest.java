@@ -1,7 +1,8 @@
-package com.quickweather.validation;
+package com.quickweather.validation.user_creation;
 
 import com.quickweather.dto.user.UserDto;
 import com.quickweather.exceptions.UserValidationException;
+import com.quickweather.validation.user.user_creation.UserPasswordValidator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

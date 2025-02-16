@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.quickweather.dto.weatherDtos.location.City;
 import com.quickweather.dto.weatherDtos.forecast.ForecastItem;
 import com.quickweather.dto.weatherDtos.forecast.HourlyForecastResponseDto;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 
@@ -17,7 +17,6 @@ class HourlyForecastResponseDtoTest {
         // Given: Ścieżka do pliku JSON
         File jsonFile = new File("src/test/resources/app/responses/forecast_for_5_days.json");
 
-        // And: Obiekt ObjectMapper
         ObjectMapper objectMapper = new ObjectMapper();
 
         // When: Deserializacja JSON do HourlyForecastResponseDto

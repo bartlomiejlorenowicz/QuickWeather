@@ -27,7 +27,6 @@ public class UserSearchHistory {
     @Column(name = "city", nullable = false)
     private String city;
 
-
     @JsonBackReference
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "weather_api_response_id", referencedColumnName = "id", nullable = false)

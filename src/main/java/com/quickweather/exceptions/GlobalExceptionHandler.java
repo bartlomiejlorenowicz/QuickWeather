@@ -100,10 +100,20 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(EmailSendingException.class)
     public ResponseEntity<Map<String, String>> handleEmailSendingException(EmailSendingException ex) {
         Map<String, String> response = new HashMap<>();
-        response.put("message", ex.getMessage());
-        response.put("errorType", "EMAIL_SENDING_ERROR");
-        response.put("timestamp", LocalDateTime.now().toString());
+        response.put(MESSAGE, ex.getMessage());
+        response.put(ERROR_TYPE, "EMAIL_SENDING_ERROR");
+        response.put(TIMESTAMP, LocalDateTime.now().toString());
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+    }
+
+    @ExceptionHandler(UserChangePasswordValidationException.class)
+    public ResponseEntity<Map<String, String>> handleUserChangePasswordValidationException(UserChangePasswordValidationException ex) {
+        Map<String, String> response = new HashMap<>();
+        response.put(MESSAGE, ex.getMessage());
+        response.put(ERROR_TYPE, ex.getUserErrorType() != null
+                ? ex.getUserErrorType().name()
+                : UserErrorType.INVALID_CURRENT_PASSWORD.name());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
     private HttpStatus mapErrorTypeToHttpStatus(WeatherErrorType weatherErrorType) {
