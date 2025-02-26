@@ -1,5 +1,6 @@
 package com.quickweather.config;
 
+import com.quickweather.admin.CustomAuthenticationFailureHandler;
 import com.quickweather.security.JwtFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -34,10 +35,12 @@ public class SecurityConfig {
 
     private final JwtFilter jwtFilter;
     private final CorsConfigurationSource corsConfigurationSource;
+    private final CustomAuthenticationFailureHandler customAuthenticationFailureHandler;
 
-    public SecurityConfig(JwtFilter jwtFilter, CorsConfigurationSource corsConfigurationSource) {
+    public SecurityConfig(JwtFilter jwtFilter, CorsConfigurationSource corsConfigurationSource, CustomAuthenticationFailureHandler customAuthenticationFailureHandler) {
         this.jwtFilter = jwtFilter;
         this.corsConfigurationSource = corsConfigurationSource;
+        this.customAuthenticationFailureHandler = customAuthenticationFailureHandler;
     }
 
     /**
@@ -55,6 +58,10 @@ public class SecurityConfig {
 
                 // 2) Disable CSRF
                 .csrf(AbstractHttpConfigurer::disable)
+
+//                .formLogin(form -> form
+//                        .loginPage("/api/v1/user/auth/login")
+//                        .failureHandler(customAuthenticationFailureHandler))
 
                 // 3) Configure authorization rules
                 .authorizeHttpRequests(auth -> auth
@@ -76,21 +83,23 @@ public class SecurityConfig {
                         ).permitAll()
                         .requestMatchers("/api/v1/history/current-with-user-history").authenticated()
                         .requestMatchers("/api/v1/user/auth/change-password").authenticated()
-                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+                        .requestMatchers(
+                                "/api/v1/admin/**",
+                                "/api/v1/admin/stats",
+                                "/api/v1/admin/users",
+                                "/api/v1/admin/change-password",
+                                "/api/v1/admin/users/{userId}/status"
+                        ).hasRole("ADMIN")
                         .requestMatchers("/api/v1/user/**").hasAnyRole("USER", "ADMIN")
                         .anyRequest().authenticated()
                 )
 
-                // 4) Use stateless sessions (JWT)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-                // 5) Add our custom JWT filter before UsernamePasswordAuthenticationFilter
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
 
-                // 6) Handle authentication exceptions (401)
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(authenticationEntryPoint()));
 
-        // Build and return the configured filter chain
         return http.build();
     }
 

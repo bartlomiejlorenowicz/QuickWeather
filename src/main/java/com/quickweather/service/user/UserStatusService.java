@@ -25,7 +25,7 @@ public class UserStatusService {
 
     @Transactional
     public void enableUser(UserId userId) {
-        User user = userSearchService.findById(userId.getValue());
+        User user = userSearchService.findById(userId.getId());
         if (user.getRoles() == null || user.getRoles().isEmpty()) {
             Set<Role> roles = new HashSet<>();
             userRoleService.assignDefaultUserRole(roles);
@@ -41,7 +41,7 @@ public class UserStatusService {
 
     @Transactional
     public void disableUser(UserId userId) {
-        User user = userSearchService.findById(userId.getValue());
+        User user = userSearchService.findById(userId.getId());
         if (user.getRoles() == null || user.getRoles().isEmpty()) {
             Set<Role> roles = new HashSet<>();
             userRoleService.assignDefaultUserRole(roles);
