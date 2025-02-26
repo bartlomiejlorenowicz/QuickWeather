@@ -11,5 +11,5 @@ import lombok.Setter;
 @Setter
 public class UserId {
 
-    private Long value;
+    private Long id;
 }

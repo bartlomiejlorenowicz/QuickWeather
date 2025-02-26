@@ -19,6 +19,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -32,6 +33,7 @@ public class UserSearchHistoryService {
     private final WeatherApiResponseRepository weatherApiResponseRepository;
     private final ObjectMapper objectMapper;
 
+    @Transactional(readOnly = true)
     public List<UserSearchHistoryResponse> getUserSearchHistory(Long userId, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("searchedAt").descending());
         // Pobierz historię użytkownika z bazy danych
