@@ -10,10 +10,12 @@ import com.quickweather.security.JwtUtil;
 import com.quickweather.service.user.CustomUserDetails;
 import com.quickweather.service.user.CustomUserDetailsService;
 import com.quickweather.validation.IntegrationTestConfig;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.util.Map;
 import java.util.Set;
@@ -24,7 +26,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-
+@ActiveProfiles("local")
+@SpringBootTest
 class UserAccountStatusControllerIntegrationTest extends IntegrationTestConfig {
 
     @Autowired
@@ -70,12 +73,11 @@ class UserAccountStatusControllerIntegrationTest extends IntegrationTestConfig {
         Map<String, Object> tokenResponse = jwtUtil.generateToken(customUserDetails, user.getUuid());
         String token = (String) tokenResponse.get("token");
 
-
         mockMvc.perform(put("/api/v1/user/account-status/enable")
                         .header("Authorization", "Bearer " + token)
                         .content(objectMapper.writeValueAsString(new UserId(user.getId())))
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent());
 
         User updatedUser = userCreationRepository.findById(user.getId()).orElseThrow();
         assertTrue(updatedUser.isEnabled(), "User should be enabled");
@@ -88,7 +90,7 @@ class UserAccountStatusControllerIntegrationTest extends IntegrationTestConfig {
                 .lastName("Doe")
                 .email("john.doe@example.com")
                 .password("password")
-                .isEnabled(false)
+                .isEnabled(true)
                 .phoneNumber("1234567890")
                 .uuid(UUID.randomUUID())
                 .roles(Set.of(
@@ -106,7 +108,7 @@ class UserAccountStatusControllerIntegrationTest extends IntegrationTestConfig {
         mockMvc.perform(put("/api/v1/user/account-status/disable").content(objectMapper.writeValueAsString(new UserId(user.getId())))
                         .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent());
 
         User updatedUser = userCreationRepository.findById(user.getId()).orElseThrow();
         assertFalse(updatedUser.isEnabled(), "User should be disabled");

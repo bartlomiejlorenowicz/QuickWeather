@@ -65,12 +65,16 @@ public class SecurityConfig {
                                 "/api/v1/user/auth/validate-reset-token",
                                 "/api/v1/user/auth/reset-password",
                                 "/api/v1/user/auth/set-new-password",
-                                "/api/weather/city",
-                                "/api/weather/forecast",
+                                "/api/v1/weather/city",
+                                "/api/v1/weather/forecast",
+                                "/api/v1/weather/zipcode",
+                                "/api/v1/weather/coordinate",
+                                "/api/v1/weather/forecast/daily",
                                 "/api/v1/user/auth/forgot-password",
-                                "/api/weather/city/air-quality"
+                                "/api/v1/weather/city/air-quality",
+                                "/api/v1/history"
                         ).permitAll()
-                        .requestMatchers("/api/weather/current-with-user-history").authenticated()
+                        .requestMatchers("/api/v1/history/current-with-user-history").authenticated()
                         .requestMatchers("/api/v1/user/auth/change-password").authenticated()
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/v1/user/**").hasAnyRole("USER", "ADMIN")

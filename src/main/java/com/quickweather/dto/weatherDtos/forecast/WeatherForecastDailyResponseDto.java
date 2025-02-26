@@ -1,26 +1,14 @@
 package com.quickweather.dto.weatherDtos.forecast;
 
 import com.quickweather.dto.weatherDtos.location.City;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.List;
-
+@Getter
+@Setter
 public class WeatherForecastDailyResponseDto {
-    private City city;
+    private int cnt;
     private List<ForecastDailyDto> list;
-
-    public City getCity() {
-        return city;
-    }
-
-    public void setCity(City city) {
-        this.city = city;
-    }
-
-    public List<ForecastDailyDto> getList() {
-        return list;
-    }
-
-    public void setList(List<ForecastDailyDto> list) {
-        this.list = list;
-    }
+    private City city;
 }

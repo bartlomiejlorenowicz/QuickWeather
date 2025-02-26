@@ -1,5 +1,8 @@
 package com.quickweather.exceptions;
 
+import lombok.Getter;
+
+@Getter
 public enum UserErrorType {
     INVALID_FIRST_NAME,
     INVALID_LAST_NAME,
@@ -9,5 +12,8 @@ public enum UserErrorType {
     ACCOUNT_DISABLED,
     ACCOUNT_ENABLED,
     INVALID_PHONE_NUMBER,
-    USER_NOT_FOUND
+    USER_NOT_FOUND,
+    INVALID_CURRENT_PASSWORD,
+    INVALID_NEW_PASSWORD
+
 }

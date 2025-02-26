@@ -2,13 +2,15 @@ package com.quickweather.service.user;
 
 import com.quickweather.dto.user.user_auth.ChangePasswordRequest;
 import com.quickweather.domain.User;
+import com.quickweather.exceptions.UserErrorType;
+import com.quickweather.exceptions.UserNotFoundException;
+import com.quickweather.repository.UserRepository;
+import com.quickweather.validation.user.user_change_password.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 /**
  * Provides functionality to change a user's password.
@@ -28,42 +30,26 @@ import org.springframework.web.server.ResponseStatusException;
 @RequiredArgsConstructor
 public class PasswordService {
 
-    private final UserCrudService userCrudService;
+    private final UserSearchService userSearchService;
     private final PasswordEncoder passwordEncoder;
+    private final UserRepository userRepository;
+    private final ChangePasswordValidatorChain validatorChain;
 
-    /**
-     * Changes the password for a user identified by the given email.
-     *
-     * @param email   The email of the user requesting the password change.
-     * @param request A data transfer object containing the current password,
-     *                the new password, and its confirmation.
-     * @throws ResponseStatusException If the user is not found (404),
-     *                                 if the current password is invalid (401),
-     *                                 if the new passwords do not match (400),
-     *                                 or if the new password is the same as the old one (400).
-     */
     public void changePassword(String email, ChangePasswordRequest request) {
-        User user = userCrudService.findByEmail(email);
+        User user = userSearchService.findByEmail(email);
         if (user == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found.");
+            log.info("User not found.");
+            throw new UserNotFoundException(UserErrorType.USER_NOT_FOUND, "User not found.");
         }
 
-        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Current password is incorrect.");
-        }
-
-        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Passwords do not match.");
-        }
-
-        if (passwordEncoder.matches(request.getNewPassword(), user.getPassword())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "New password must be different from the old password.");
-        }
+        ChangePasswordValidator validator = validatorChain.buildChain();
+        validator.validate(user, request, passwordEncoder);
 
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
-        userCrudService.save(user);
+        userRepository.save(user);
 
         SecurityContextHolder.clearContext();
         log.info("Password changed successfully for user: {}. Security context cleared.", email);
     }
+
 }

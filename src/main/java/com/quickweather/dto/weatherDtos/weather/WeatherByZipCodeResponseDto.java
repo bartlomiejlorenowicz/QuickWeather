@@ -1,27 +1,57 @@
 package com.quickweather.dto.weatherDtos.weather;
 
-import com.quickweather.dto.weatherDtos.location.SysDto;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Data;
 
-import java.util.List;
-
+@Data
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class WeatherByZipCodeResponseDto {
 
-    private SysDto sys;
-    private List<Weather> weather;
+    @JsonProperty("weather")
+    private Weather[] weatherArray;
 
-    public List<Weather> getWeather() {
-        return weather;
+    private Main main;
+
+    private int visibility;
+
+    private Wind wind;
+
+    public String getWeatherMain() {
+        return weatherArray != null && weatherArray.length > 0 ? weatherArray[0].getMain() : null;
     }
 
-    public void setWeather(List<Weather> weather) {
-        this.weather = weather;
+    public String getWeatherDescription() {
+        return weatherArray != null && weatherArray.length > 0 ? weatherArray[0].getDescription() : null;
     }
 
-    public SysDto getSys() {
-        return sys;
+    @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class Weather {
+        private int id;
+        private String main;
+        private String description;
+        private String icon;
     }
 
-    public void setSys(SysDto sys) {
-        this.sys = sys;
+    @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class Main {
+        private double temp;
+        @JsonProperty("feels_like")
+        private double feelsLike;
+        @JsonProperty("temp_min")
+        private double tempMin;
+        @JsonProperty("temp_max")
+        private double tempMax;
+        private int pressure;
+        private int humidity;
+    }
+
+    @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class Wind {
+        private double speed;
+        private int deg;
     }
 }

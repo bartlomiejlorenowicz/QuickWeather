@@ -27,7 +27,11 @@ public class JwtFilter extends OncePerRequestFilter {
             "/api/v1/user/register",
             "/api/v1/user/auth/reset-password",
             "/api/v1/user/auth/set-new-password",
-            "/api/v1/user/auth/forgot-password"
+            "/api/v1/user/auth/forgot-password",
+            "/api/v1/weather/forecast",
+            "/api/v1/weather/zipcode",
+            "/api/v1/weather/coordinate",
+            "/api/v1/weather/forecast/daily"
     );
 
     public JwtFilter(JwtUtil jwtUtil, CustomUserDetailsService userDetailsService) {
