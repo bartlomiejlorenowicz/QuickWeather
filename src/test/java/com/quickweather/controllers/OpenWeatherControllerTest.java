@@ -3,14 +3,15 @@ package com.quickweather.controllers;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import com.quickweather.domain.Role;
-import com.quickweather.domain.RoleType;
 import com.quickweather.domain.User;
-import com.quickweather.exceptions.UserNotFoundException;
+import com.quickweather.exceptions.WeatherErrorType;
+import com.quickweather.exceptions.WeatherServiceException;
 import com.quickweather.repository.RoleRepository;
 import com.quickweather.repository.UserRepository;
 import com.quickweather.security.JwtTestUtil;
 import com.quickweather.security.TestConfig;
 import com.quickweather.service.user.UserRoleService;
+import com.quickweather.service.weather.OpenWeatherServiceImpl;
 import com.quickweather.validation.IntegrationTestConfig;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,7 +25,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Set;
@@ -52,6 +52,9 @@ class OpenWeatherControllerTest extends IntegrationTestConfig {
 
     @Autowired
     private UserRoleService userRoleService;
+
+    @Autowired
+    private OpenWeatherServiceImpl openWeatherServiceImpl;
 
     private String tokenUser;
 
@@ -344,5 +347,17 @@ class OpenWeatherControllerTest extends IntegrationTestConfig {
                 .andExpect(jsonPath("$.message").value("Latitude must be between -90 and 90"));
     }
 
+//    @Test
+//    void shouldThrowException_WhenCityNameContainsInvalidCharacters() {
+//        // Przykładowa nieprawidłowa nazwa miasta zawierająca cyfry i znaki specjalne
+//        String invalidCity = "London123!";
+//
+//        WeatherServiceException exception = assertThrows(WeatherServiceException.class, () ->
+//                openWeatherServiceImpl.getCurrentWeatherByCity(invalidCity)
+//        );
+//        // Sprawdzamy, czy typ błędu odpowiada INVALID_CITY_NAME
+//        assertEquals(WeatherErrorType.INVALID_CITY_NAME, exception.getErrorType());
+//    }
+    // todo
 
 }

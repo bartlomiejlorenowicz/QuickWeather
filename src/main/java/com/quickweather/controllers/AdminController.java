@@ -11,12 +11,11 @@ import com.quickweather.service.user.PasswordService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @Slf4j
 @CrossOrigin(origins = "http://localhost:4200")
@@ -49,8 +48,9 @@ public class AdminController {
     }
 
     @GetMapping("/logs")
-    public List<SecurityEvent> getSecurityEvents() {
-        return securityEventService.getAllEvents();
+    public ResponseEntity<Page<SecurityEvent>> getSecurityEvents(Pageable pageable) {
+        Page<SecurityEvent> events = securityEventService.getAllEvents(pageable);
+        return ResponseEntity.ok(events);
     }
 
     @PostMapping("/change-password")

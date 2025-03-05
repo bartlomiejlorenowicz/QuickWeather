@@ -32,7 +32,6 @@ public class UserNotificationService {
                                 .build();
                     });
 
-            // Uzupełnij treść (jeśli szablon zawiera placeholder, np. %s)
             String subject = template.getSubject();
             String body = String.format(template.getBody(), firstName);
 

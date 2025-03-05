@@ -14,14 +14,28 @@ public class UserFirstNameValidator extends Validator {
         if (isNull(firstName)) {
             throw new UserValidationException(UserErrorType.INVALID_FIRST_NAME, "first name is null");
         }
-        boolean firstnameTooShort = firstName.length() < 2;
-        if (firstnameTooShort) {
+
+        // Usunięcie zbędnych spacji
+        firstName = firstName.trim();
+
+        // Sprawdzenie czy ciąg nie jest pusty po trimowaniu
+        if (firstName.isEmpty()) {
+            throw new UserValidationException(UserErrorType.INVALID_FIRST_NAME, "first name cannot be empty or only whitespace");
+        }
+
+        // Walidacja długości
+        if (firstName.length() < 2) {
             throw new UserValidationException(UserErrorType.INVALID_FIRST_NAME, "first name must have at least 2 letters");
         }
-        boolean firstnameTooLong = firstName.length() > 30;
-        if (firstnameTooLong) {
+        if (firstName.length() > 30) {
             throw new UserValidationException(UserErrorType.INVALID_FIRST_NAME, "first name must have max 30 letters");
         }
+
+        if (!firstName.matches("^[A-Za-zĄąĆćĘęŁłŃńÓóŚśŹźŻż\\-]+$")) {
+            throw new UserValidationException(UserErrorType.INVALID_FIRST_NAME, "first name contains invalid characters");
+        }
+
         validateNext(userDto);
     }
 }
+

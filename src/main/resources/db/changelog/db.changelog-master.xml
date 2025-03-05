@@ -274,5 +274,75 @@
         </insert>
     </changeSet>
 
+    <changeSet id="017-create-security-events-table" author="Bartek">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="security_events"/>
+            </not>
+        </preConditions>
+        <createTable tableName="security_events">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="username" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="event_type" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="ip_address" type="VARCHAR(255)"/>
+            <column name="event_time" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="018-add-event_type-column" author="Bartek" runAlways="true">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="security_events" columnName="event_type"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="security_events">
+            <column name="event_type" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="019-add-ip_address-column" author="Bartek" runAlways="true">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="security_events" columnName="ip_address"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="security_events">
+            <column name="ip_address" type="VARCHAR(255)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="020-add-failed-attempts-column" author="Bartek">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="users" columnName="failed_attempts"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="users">
+            <column name="failed_attempts" type="INT" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="021-add-lock-until-column" author="Bartek">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="users" columnName="lock_until"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="users">
+            <column name="lock_until" type="TIMESTAMP"/>
+        </addColumn>
+    </changeSet>
 
 </databaseChangeLog>

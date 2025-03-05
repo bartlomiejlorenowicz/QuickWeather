@@ -1,6 +1,5 @@
 package com.quickweather.config;
 
-import com.quickweather.admin.CustomAuthenticationFailureHandler;
 import com.quickweather.security.JwtFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -35,12 +34,10 @@ public class SecurityConfig {
 
     private final JwtFilter jwtFilter;
     private final CorsConfigurationSource corsConfigurationSource;
-    private final CustomAuthenticationFailureHandler customAuthenticationFailureHandler;
 
-    public SecurityConfig(JwtFilter jwtFilter, CorsConfigurationSource corsConfigurationSource, CustomAuthenticationFailureHandler customAuthenticationFailureHandler) {
+    public SecurityConfig(JwtFilter jwtFilter, CorsConfigurationSource corsConfigurationSource) {
         this.jwtFilter = jwtFilter;
         this.corsConfigurationSource = corsConfigurationSource;
-        this.customAuthenticationFailureHandler = customAuthenticationFailureHandler;
     }
 
     /**
@@ -58,10 +55,6 @@ public class SecurityConfig {
 
                 // 2) Disable CSRF
                 .csrf(AbstractHttpConfigurer::disable)
-
-//                .formLogin(form -> form
-//                        .loginPage("/api/v1/user/auth/login")
-//                        .failureHandler(customAuthenticationFailureHandler))
 
                 // 3) Configure authorization rules
                 .authorizeHttpRequests(auth -> auth

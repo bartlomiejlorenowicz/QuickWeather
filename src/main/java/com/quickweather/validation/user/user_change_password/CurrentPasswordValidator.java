@@ -18,5 +18,6 @@ public class CurrentPasswordValidator extends ChangePasswordValidator {
             log.error("Current password is incorrect.");
             throw new UserChangePasswordValidationException(UserErrorType.INVALID_CURRENT_PASSWORD, "Current password is incorrect.");
         }
+        validateNext(user, request, encoder);
     }
 }
