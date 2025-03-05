@@ -4,19 +4,23 @@ import com.quickweather.domain.User;
 import com.quickweather.dto.user.user_auth.ChangePasswordRequest;
 import com.quickweather.exceptions.UserChangePasswordValidationException;
 import com.quickweather.exceptions.UserErrorType;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Slf4j
-@Getter
-public class ConfirmPasswordValidator extends ChangePasswordValidator {
+public class NoSpacesValidator extends ChangePasswordValidator {
+
     @Override
     public void validate(User user, ChangePasswordRequest request, PasswordEncoder encoder) {
-        if (!encoder.matches(request.getConfirmPassword(), request.getNewPassword())) {
-            log.error("Passwords do not match.");
-            throw new UserChangePasswordValidationException(UserErrorType.INVALID_CURRENT_PASSWORD, "Passwords do not match.");
+        String newPassword = request.getNewPassword();
+        if (newPassword.contains(" ")) {
+            log.error("New password must not contain spaces.");
+            throw new UserChangePasswordValidationException(
+                    UserErrorType.INVALID_NEW_PASSWORD,
+                    "New password must not contain spaces."
+            );
         }
+        // Przekazanie kontroli do kolejnego walidatora, jeśli istnieje
         validateNext(user, request, encoder);
     }
 }

@@ -29,6 +29,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -51,6 +52,8 @@ public class OpenWeatherServiceImpl extends WeatherServiceBase implements OpenWe
 
     private final UserSearchHistoryService userSearchHistoryService;
 
+    private static final Pattern CITY_PATTERN = Pattern.compile("^[A-Za-zĄąĆćĘęŁłŃńÓóŚśŹźŻż\\s\\-]+$");
+
     public OpenWeatherServiceImpl(RestTemplate restTemplate,
                                   WeatherApiResponseRepository weatherApiResponseRepository,
                                   ObjectMapper objectMapper,
@@ -72,6 +75,11 @@ public class OpenWeatherServiceImpl extends WeatherServiceBase implements OpenWe
 
     @Override
     public WeatherResponse getCurrentWeatherByCity(String city) {
+
+        if (city == null || !CITY_PATTERN.matcher(city.trim()).matches()) {
+            throw new WeatherServiceException(WeatherErrorType.INVALID_CITY_NAME, "Invalid city name provided: " + city);
+        }
+
         Optional<WeatherApiResponse> cachedResponse = getCacheWeatherResponse(city, ApiSource.OPEN_WEATHER);
         if (cachedResponse.isPresent()) {
             return processCachedResponse(city, cachedResponse.get());

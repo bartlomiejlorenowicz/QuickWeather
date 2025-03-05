@@ -9,9 +9,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
 @Service
 @RequiredArgsConstructor
 public class AdminService {
@@ -19,7 +16,6 @@ public class AdminService {
     private final UserRepository userRepository;
 
     public AdminStatsResponse getDashboardStats() {
-        // Przykładowa logika – pobierz liczbę aktywnych użytkowników, loginy itp.
         long activeUsers = userRepository.countByIsEnabledTrue();
         long totalUsers = userRepository.count();
 

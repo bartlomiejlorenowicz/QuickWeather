@@ -18,6 +18,7 @@ public class LoginResponse {
     private String email;
     private Instant timestamp;
     private OperationType operationType;
+    private String errorMessage;
 
     public static LoginResponse fromTokenMap(Map<String, Object> tokenMap, CustomUserDetails customUserDetails) {
         String token = (String) tokenMap.get("token");
@@ -27,7 +28,13 @@ public class LoginResponse {
                 expiresAt,
                 customUserDetails.getEmail(),
                 Instant.now(),
-                OperationType.LOGIN
+                OperationType.LOGIN,
+                null
         );
+    }
+
+    public LoginResponse(OperationType operationType, String errorMessage) {
+        this.operationType = operationType;
+        this.errorMessage = errorMessage;
     }
 }

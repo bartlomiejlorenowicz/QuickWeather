@@ -4,10 +4,13 @@ import com.quickweather.admin.SecurityEventType;
 import com.quickweather.domain.SecurityEvent;
 import com.quickweather.repository.SecurityEventRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -20,8 +23,16 @@ public class SecurityEventService {
         repository.save(event);
     }
 
-    public List<SecurityEvent> getAllEvents() {
-        return repository.findAll();
+    public String getClientIpAddress() {
+        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        if (attributes != null && attributes.getRequest() != null) {
+            return attributes.getRequest().getRemoteAddr();
+        }
+        return "unknown-ip";
+    }
+
+    public Page<SecurityEvent> getAllEvents(Pageable pageable) {
+        return repository.findAll(pageable);
     }
 
 }

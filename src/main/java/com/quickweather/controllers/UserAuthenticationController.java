@@ -1,5 +1,6 @@
 package com.quickweather.controllers;
 
+import com.quickweather.domain.User;
 import com.quickweather.dto.apiResponse.ApiResponse;
 import com.quickweather.dto.apiResponse.LoginResponse;
 import com.quickweather.dto.apiResponse.OperationType;
@@ -8,12 +9,15 @@ import com.quickweather.dto.user.EmailRequest;
 import com.quickweather.dto.user.login.LoginRequest;
 import com.quickweather.dto.user.user_auth.ChangePasswordRequest;
 import com.quickweather.dto.user.user_auth.SetNewPasswordRequest;
+import com.quickweather.repository.UserRepository;
 import com.quickweather.security.JwtUtil;
 import com.quickweather.service.token.TokenValidationService;
 import com.quickweather.service.user.CustomUserDetails;
 import com.quickweather.service.user.PasswordResetService;
 import com.quickweather.service.user.PasswordService;
+import com.quickweather.service.user.UserLoginAttemptService;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,8 +28,10 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
+import java.util.Optional;
 
 @Slf4j
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/v1/user/auth")
 public class UserAuthenticationController {
@@ -35,18 +41,8 @@ public class UserAuthenticationController {
     private final PasswordService passwordService;
     private final PasswordResetService passwordResetService;
     private final TokenValidationService tokenValidationService;
-
-    public UserAuthenticationController(AuthenticationManager authenticationManager,
-                                        JwtUtil jwtUtil,
-                                        PasswordService passwordService,
-                                        PasswordResetService passwordResetService,
-                                        TokenValidationService tokenValidationService) {
-        this.authenticationManager = authenticationManager;
-        this.jwtUtil = jwtUtil;
-        this.passwordService = passwordService;
-        this.passwordResetService = passwordResetService;
-        this.tokenValidationService = tokenValidationService;
-    }
+    private final UserRepository userRepository;
+    private final UserLoginAttemptService userLoginAttemptService;
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest loginRequest) {
@@ -54,18 +50,28 @@ public class UserAuthenticationController {
             return ResponseEntity.badRequest().build();
         }
 
+        Optional<User> userOpt = userRepository.findByEmail(loginRequest.getEmail());
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            if (userLoginAttemptService.isAccountLocked(user)) {
+                return ResponseEntity.status(HttpStatus.LOCKED)
+                        .body(new LoginResponse(OperationType.LOGIN_FAILED, "Your account is locked for 15 minutes. Please try again later."));
+            }
+        }
+
         try {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword())
             );
 
+            userLoginAttemptService.resetFailedAttempts(loginRequest.getEmail());
+
             CustomUserDetails customUserDetails = (CustomUserDetails) authentication.getPrincipal();
             Map<String, Object> token = jwtUtil.generateToken(customUserDetails, customUserDetails.getUuid());
-
             LoginResponse response = LoginResponse.fromTokenMap(token, customUserDetails);
-
             return ResponseEntity.ok(response);
         } catch (AuthenticationException e) {
+            userLoginAttemptService.incrementFailedAttempts(loginRequest.getEmail());
             log.error("Authentication failed for user: {}", loginRequest.getEmail());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
@@ -104,7 +110,7 @@ public class UserAuthenticationController {
     }
 
     @PostMapping("/set-new-password")
-    public ResponseEntity<?> setNewPassword(@Valid @RequestBody SetNewPasswordRequest request) {
+    public ResponseEntity<ApiResponse> setNewPassword(@Valid @RequestBody SetNewPasswordRequest request) {
 
         passwordResetService.resetPasswordUsingToken(request);
 
@@ -118,7 +124,6 @@ public class UserAuthenticationController {
         log.info("Authenticated user: {}", authentication.getName());
         String email = authentication.getName();
 
-        // Wywołujemy logikę zmiany hasła w serwisie
         passwordService.changePassword(email, request);
 
         ApiResponse apiResponse = ApiResponse.buildApiResponse("Password changed successfully. Please log in again.", OperationType.CHANGE_PASSWORD);

@@ -9,7 +9,8 @@ public class ChangePasswordValidatorChain {
         return ChangePasswordValidator.link(
                 new CurrentPasswordValidator(),
                 new ConfirmPasswordValidator(),
-                new NewPasswordDifferentValidator()
+                new NewPasswordDifferentValidator(),
+                new NoSpacesValidator()
         );
     }
 }

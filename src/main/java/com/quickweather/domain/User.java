@@ -51,6 +51,12 @@ public class User {
     @Column(name = "is_locked", nullable = false)
     private boolean isLocked = false;
 
+    @Column(name = "failed_attempts", nullable = false)
+    private int failedAttempts = 0;
+
+    @Column(name = "lock_until")
+    private LocalDateTime lockUntil;
+
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "user_roles",
