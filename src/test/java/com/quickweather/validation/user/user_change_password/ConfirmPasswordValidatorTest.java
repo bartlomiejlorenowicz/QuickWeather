@@ -24,12 +24,10 @@ class ConfirmPasswordValidatorTest {
 
         ConfirmPasswordValidator validator = new ConfirmPasswordValidator();
         User user = new User();
-        user.setPassword("encodedPassword");
 
         ChangePasswordRequest request = new ChangePasswordRequest();
-        request.setCurrentPassword("plainPassword");
-
-        Mockito.when(encoder.matches("plainPassword", "encodedPassword")).thenReturn(true);
+        request.setNewPassword("password123");
+        request.setConfirmPassword("password123");
 
         assertDoesNotThrow(() -> validator.validate(user, request, encoder));
     }
@@ -39,12 +37,10 @@ class ConfirmPasswordValidatorTest {
 
         ConfirmPasswordValidator validator = new ConfirmPasswordValidator();
         User user = new User();
-        user.setPassword("encodedPassword");
 
         ChangePasswordRequest request = new ChangePasswordRequest();
-        request.setCurrentPassword("wrongPassword");
-
-        Mockito.when(encoder.matches("wrongPassword", "encodedPassword")).thenReturn(false);
+        request.setNewPassword("password123");
+        request.setConfirmPassword("differentPassword");
 
         UserChangePasswordValidationException exception = assertThrows(
                 UserChangePasswordValidationException.class,

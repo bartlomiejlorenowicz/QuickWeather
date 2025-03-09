@@ -13,7 +13,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 public class ConfirmPasswordValidator extends ChangePasswordValidator {
     @Override
     public void validate(User user, ChangePasswordRequest request, PasswordEncoder encoder) {
-        if (!encoder.matches(request.getConfirmPassword(), request.getNewPassword())) {
+        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
             log.error("Passwords do not match.");
             throw new UserChangePasswordValidationException(UserErrorType.INVALID_CURRENT_PASSWORD, "Passwords do not match.");
         }

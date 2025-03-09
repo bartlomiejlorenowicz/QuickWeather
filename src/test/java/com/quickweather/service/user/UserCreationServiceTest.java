@@ -1,12 +1,10 @@
 package com.quickweather.service.user;
 
 import com.quickweather.dto.user.UserDto;
-import com.quickweather.domain.Role;
-import com.quickweather.domain.RoleType;
 import com.quickweather.domain.User;
 import com.quickweather.mapper.UserMapper;
-import com.quickweather.repository.RoleRepository;
 import com.quickweather.repository.UserRepository;
+import com.quickweather.service.admin.SecurityEventService;
 import com.quickweather.validation.user.user_creation.UserValidator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,8 +14,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.any;
@@ -31,7 +27,7 @@ class UserCreationServiceTest {
     private UserValidator validator;
 
     @Mock
-    private UserRepository userCreationRepository;
+    private UserRepository userRepository;
 
     @Mock
     private UserMapper userMapper;
@@ -40,25 +36,24 @@ class UserCreationServiceTest {
     private PasswordEncoder passwordEncoder;
 
     @Mock
-    private RoleRepository roleRepository;
-
-    @Mock
     private UserRoleService userRoleService;
 
     @Mock
     private UserNotificationService userNotificationService;
 
+    @Mock
+    private SecurityEventService securityEventService;
+
     @InjectMocks
     private UserCreationService userCreationService;
 
-    // Helper – ustawiamy również firstName oraz lastName, aby nie były null
     private UserDto createUserDto(String email, String password) {
-        UserDto userDto = new UserDto();
-        userDto.setEmail(email);
-        userDto.setPassword(password);
-        userDto.setFirstName("TestFirstName");
-        userDto.setLastName("TestLastName");
-        return userDto;
+        UserDto dto = new UserDto();
+        dto.setEmail(email);
+        dto.setPassword(password);
+        dto.setFirstName("John");
+        dto.setLastName("Doe");
+        return dto;
     }
 
     private User createUser(String email, String password) {
@@ -68,103 +63,59 @@ class UserCreationServiceTest {
         return user;
     }
 
-    private Role createRole(RoleType roleType) {
-        Role role = new Role();
-        role.setRoleType(roleType);
-        return role;
-    }
-
     @Test
     void shouldSaveUserWhenDataIsValid() {
-        // Arrange
-        UserDto userDto = createUserDto("test@example.com", "password");
-        User user = createUser("test@example.com", "encodedPassword");
-        Role defaultRole = createRole(RoleType.USER);
+        UserDto dto = createUserDto("test@example.com", "password");
+        User user = createUser("test@example.com", "oldPassword");
 
-        doNothing().when(validator).validate(userDto);
-        when(userMapper.toEntity(userDto)).thenReturn(user);
-        when(passwordEncoder.encode(userDto.getPassword())).thenReturn("encodedPassword");
-        // W tym teście weryfikujemy interakcję z userRoleService, a nie bezpośrednio z roleRepository
+        doNothing().when(validator).validate(dto);
+        when(userMapper.toEntity(dto)).thenReturn(user);
+
+        when(passwordEncoder.encode("password")).thenReturn("encodedPassword");
+        when(userRepository.save(any(User.class))).thenReturn(user);
         doAnswer(invocation -> {
-            @SuppressWarnings("unchecked")
-            Set<Role> roles = (Set<Role>) invocation.getArgument(0);
-            roles.add(defaultRole);
+            ((HashSet) invocation.getArgument(0)).add("DEFAULT_ROLE");
             return null;
-        }).when(userRoleService).assignDefaultUserRole(any(Set.class));
-        when(userCreationRepository.save(any(User.class))).thenReturn(user);
+        }).when(userRoleService).assignDefaultUserRole(any());
+
         doNothing().when(userNotificationService).sendWelcomeEmail(anyString(), anyString());
+        when(securityEventService.getClientIpAddress()).thenReturn("127.0.0.1");
+        doNothing().when(securityEventService).logEvent(anyString(), any(), anyString());
 
-        // Act & Assert
-        assertDoesNotThrow(() -> userCreationService.createUser(userDto));
+        assertDoesNotThrow(() -> userCreationService.createUser(dto));
 
-        // Verify – sprawdzamy wywołania kluczowych metod
-        verify(validator).validate(userDto);
-        verify(userMapper).toEntity(userDto);
-        verify(passwordEncoder).encode(userDto.getPassword());
-        verify(userRoleService).assignDefaultUserRole(any(Set.class));
-        verify(userCreationRepository).save(user);
-        verify(userNotificationService).sendWelcomeEmail(userDto.getEmail(), userDto.getFirstName());
+        verify(validator).validate(dto);
+        verify(userMapper).toEntity(dto);
+        verify(passwordEncoder).encode("password");
+        verify(userRoleService).assignDefaultUserRole(any());
+        verify(userRepository).save(user);
+        verify(userNotificationService).sendWelcomeEmail("test@example.com", "John");
+        verify(securityEventService).logEvent(eq("test@example.com"), any(), eq("127.0.0.1"));
     }
 
     @Test
-    void shouldCreateDefaultRoleWhenNonExistent() {
-        // Arrange
-        UserDto userDto = createUserDto("test@example.com", "password");
-        User user = createUser("test@example.com", "encodedPassword");
+    void shouldCreateDefaultRoleWhenUserDtoRolesAreNull() {
+        UserDto dto = createUserDto("test@example.com", "password");
 
-        doNothing().when(validator).validate(userDto);
-        when(userMapper.toEntity(userDto)).thenReturn(user);
-        when(passwordEncoder.encode(userDto.getPassword())).thenReturn("encodedPassword");
-        // Symulujemy brak domyślnej roli – nie musimy weryfikować roli z repozytorium, ponieważ
-        // logika przypisania roli leży w userRoleService
+        dto.setRoles(null);
+        User user = createUser("test@example.com", "oldPassword");
+
+        doNothing().when(validator).validate(dto);
+        when(userMapper.toEntity(dto)).thenReturn(user);
+        when(passwordEncoder.encode("password")).thenReturn("encodedPassword");
         doAnswer(invocation -> {
-            @SuppressWarnings("unchecked")
-            Set<Role> roles = (Set<Role>) invocation.getArgument(0);
-            // Symulujemy stworzenie nowej roli i jej przypisanie
-            Role newRole = new Role(1L, RoleType.USER, new HashSet<>());
-            roles.add(newRole);
+            ((HashSet) invocation.getArgument(0)).add("DEFAULT_ROLE");
             return null;
-        }).when(userRoleService).assignDefaultUserRole(any(Set.class));
-        when(userCreationRepository.save(any(User.class))).thenReturn(user);
+        }).when(userRoleService).assignDefaultUserRole(any());
+        when(userRepository.save(any(User.class))).thenReturn(user);
         doNothing().when(userNotificationService).sendWelcomeEmail(anyString(), anyString());
+        when(securityEventService.getClientIpAddress()).thenReturn("127.0.0.1");
+        doNothing().when(securityEventService).logEvent(anyString(), any(), anyString());
 
-        // Act & Assert
-        assertDoesNotThrow(() -> userCreationService.createUser(userDto));
+        assertDoesNotThrow(() -> userCreationService.createUser(dto));
 
-        // Verify – sprawdzamy, że metoda przypisania domyślnej roli została wywołana,
-        // a użytkownik został zapisany i wysłano e-mail powitalny
-        verify(userRoleService).assignDefaultUserRole(any(Set.class));
-        verify(userCreationRepository).save(user);
-        verify(userNotificationService).sendWelcomeEmail(userDto.getEmail(), userDto.getFirstName());
-    }
-
-    @Test
-    void shouldAssignDefaultRoleWhenUserDtoRolesAreNull() {
-        // Arrange
-        UserDto userDto = createUserDto("test@example.com", "password");
-        // Ustawiamy role na null – DTO nie ma ról
-        userDto.setRoles(null);
-        User user = createUser("test@example.com", "encodedPassword");
-        Role defaultRole = createRole(RoleType.USER);
-
-        doNothing().when(validator).validate(userDto);
-        when(userMapper.toEntity(userDto)).thenReturn(user);
-        when(passwordEncoder.encode(userDto.getPassword())).thenReturn("encodedPassword");
-        doAnswer(invocation -> {
-            @SuppressWarnings("unchecked")
-            Set<Role> roles = (Set<Role>) invocation.getArgument(0);
-            roles.add(defaultRole);
-            return null;
-        }).when(userRoleService).assignDefaultUserRole(any(Set.class));
-        when(userCreationRepository.save(any(User.class))).thenReturn(user);
-        doNothing().when(userNotificationService).sendWelcomeEmail(anyString(), anyString());
-
-        // Act & Assert
-        assertDoesNotThrow(() -> userCreationService.createUser(userDto));
-
-        // Verify – weryfikujemy, że przypisanie domyślnej roli oraz zapis użytkownika zostały wykonane
-        verify(userRoleService).assignDefaultUserRole(any(Set.class));
-        verify(userCreationRepository).save(user);
-        verify(userNotificationService).sendWelcomeEmail(userDto.getEmail(), userDto.getFirstName());
+        verify(userRoleService).assignDefaultUserRole(any());
+        verify(userRepository).save(user);
+        verify(userNotificationService).sendWelcomeEmail("test@example.com", "John");
     }
 }
