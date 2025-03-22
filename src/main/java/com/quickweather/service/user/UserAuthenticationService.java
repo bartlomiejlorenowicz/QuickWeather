@@ -50,7 +50,10 @@ public class UserAuthenticationService {
             Map<String, Object> tokenMap = jwtUtil.generateToken(customUserDetails, customUserDetails.getUuid());
             return LoginResponse.fromTokenMap(tokenMap, customUserDetails);
         } catch (AuthenticationException e) {
-            userLoginAttemptService.incrementFailedAttempts(loginRequest.getEmail());
+            Optional<User> userOptAfter = userRepository.findByEmail(loginRequest.getEmail());
+            if (userOptAfter.isPresent() && userLoginAttemptService.isAccountLocked(userOptAfter.get())) {
+                throw new ResponseStatusException(HttpStatus.LOCKED, "Your account is locked for 15 minutes. Please try again later.");
+            }
             log.error("Authentication failed for user: {}", loginRequest.getEmail());
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
         }

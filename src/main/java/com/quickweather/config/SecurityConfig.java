@@ -19,7 +19,6 @@ import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-
 /**
  * Spring Security configuration for the application.
  * <p>
@@ -71,7 +70,7 @@ public class SecurityConfig {
                                 "/api/v1/weather/coordinate",
                                 "/api/v1/weather/forecast/daily",
                                 "/api/v1/user/auth/forgot-password",
-                                "/api/v1/weather/city/air-quality",
+                                "/api/v1/weather/air-quality",
                                 "/api/v1/history"
                         ).permitAll()
                         .requestMatchers("/api/v1/history/current-with-user-history").authenticated()
@@ -81,7 +80,8 @@ public class SecurityConfig {
                                 "/api/v1/admin/stats",
                                 "/api/v1/admin/users",
                                 "/api/v1/admin/change-password",
-                                "/api/v1/admin/users/{userId}/status"
+                                "/api/v1/admin/users/{userId}/status",
+                                "/api/v1/admin/user-activity"
                         ).hasRole("ADMIN")
                         .requestMatchers("/api/v1/user/**").hasAnyRole("USER", "ADMIN")
                         .anyRequest().authenticated()
