@@ -30,14 +30,7 @@ public class UserHistoryController {
     @GetMapping("/current-with-user-history")
     public WeatherResponse getWeatherWithHistory(@RequestParam String city,
                                                  @AuthenticationPrincipal CustomUserDetails userDetails) {
-        WeatherResponse response = currentWeatherService.getCurrentWeatherByCity(city);
-
-        if (userDetails != null) {
-            userSearchHistoryService.saveSearchHistory(userDetails.getUserId(), city, response);
-        } else {
-            currentWeatherService.saveWeatherApiResponse(city, response);
-        }
-        return response;
+        return currentWeatherService.getWeatherAndSaveHistory(city, userDetails);
     }
 
     @GetMapping
