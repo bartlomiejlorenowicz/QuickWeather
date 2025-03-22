@@ -74,13 +74,14 @@ public class UserSearchHistoryService {
             weatherApiResponse.setCreatedAt(LocalDateTime.now());
 
             existingWeatherApiResponse = weatherApiResponseRepository.save(weatherApiResponse);
+            return;
         }
 
         // Tworzymy i zapisujemy historię wyszukiwań użytkownika
         UserSearchHistory searchHistory = new UserSearchHistory();
         searchHistory.setUser(user);
         searchHistory.setCity(city);
-        searchHistory.setWeatherApiResponse(existingWeatherApiResponse); // Powiązanie z istniejącą odpowiedzią pogodową
+        searchHistory.setWeatherApiResponse(existingWeatherApiResponse);
         searchHistory.setSearchedAt(LocalDateTime.now());
 
         userSearchHistoryRepository.save(searchHistory);

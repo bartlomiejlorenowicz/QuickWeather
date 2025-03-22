@@ -2,8 +2,8 @@ package com.quickweather.service.weather;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.quickweather.domain.ApiQueryLog;
 import com.quickweather.dto.weatherDtos.airpollution.AirPollutionResponseDto;
-import com.quickweather.dto.weatherDtos.forecast.ForecastDailyDto;
 import com.quickweather.dto.weatherDtos.forecast.HourlyForecastResponseDto;
 import com.quickweather.dto.weatherDtos.forecast.WeatherForecastDailyResponseDto;
 import com.quickweather.dto.weatherDtos.weather.Coordinates;
@@ -14,7 +14,9 @@ import com.quickweather.domain.ApiSource;
 import com.quickweather.domain.WeatherApiResponse;
 import com.quickweather.exceptions.WeatherErrorType;
 import com.quickweather.exceptions.WeatherServiceException;
+import com.quickweather.repository.ApiQueryLogRepository;
 import com.quickweather.repository.WeatherApiResponseRepository;
+import com.quickweather.service.user.CustomUserDetails;
 import com.quickweather.utils.UriBuilderUtils;
 import com.quickweather.validation.location.CoordinatesValidator;
 import com.quickweather.validation.location.CoordinatesValidatorChain;
@@ -50,6 +52,8 @@ public class OpenWeatherServiceImpl extends WeatherServiceBase implements OpenWe
     private static final String PARAM_LANGUAGE = "lang";
     private static final String PARAM_COUNT = "cnt";
 
+    private final ApiQueryLogRepository apiQueryLogRepository;
+
     private final UserSearchHistoryService userSearchHistoryService;
 
     private static final Pattern CITY_PATTERN = Pattern.compile("^[A-Za-zĄąĆćĘęŁłŃńÓóŚśŹźŻż\\s\\-]+$");
@@ -57,21 +61,14 @@ public class OpenWeatherServiceImpl extends WeatherServiceBase implements OpenWe
     public OpenWeatherServiceImpl(RestTemplate restTemplate,
                                   WeatherApiResponseRepository weatherApiResponseRepository,
                                   ObjectMapper objectMapper,
+                                  ApiQueryLogRepository apiQueryLogRepository,
                                   UserSearchHistoryService userSearchHistoryService) {
         super(restTemplate, weatherApiResponseRepository, objectMapper);
+        this.apiQueryLogRepository = apiQueryLogRepository;
         this.userSearchHistoryService = userSearchHistoryService;
     }
 
-    public void saveWeatherApiResponse(String city, WeatherResponse weatherResponse) {
-        WeatherApiResponse weatherApiResponse = new WeatherApiResponse();
-        weatherApiResponse.setCity(city);
-        weatherApiResponse.setApiSource(ApiSource.OPEN_WEATHER);
-        weatherApiResponse.setResponseJson(objectMapper.valueToTree(weatherResponse));
-        weatherApiResponse.setRequestJson(objectMapper.valueToTree(weatherResponse));
-        weatherApiResponse.setCreatedAt(LocalDateTime.now());
-
-        weatherApiResponseRepository.save(weatherApiResponse);
-    }
+    // ==================== API Method ====================
 
     @Override
     public WeatherResponse getCurrentWeatherByCity(String city) {
@@ -82,52 +79,11 @@ public class OpenWeatherServiceImpl extends WeatherServiceBase implements OpenWe
 
         Optional<WeatherApiResponse> cachedResponse = getCacheWeatherResponse(city, ApiSource.OPEN_WEATHER);
         if (cachedResponse.isPresent()) {
+            apiQueryLogRepository.save(new ApiQueryLog(city, LocalDateTime.now()));
             return processCachedResponse(city, cachedResponse.get());
         }
 
         return fetchWeatherFromApi(city);
-    }
-
-    // helper methods for getCurrentWeatherByCity
-    private WeatherResponse processCachedResponse(String city, WeatherApiResponse cachedResponse) {
-        log.info("Returning cached response for city {}", city);
-        try {
-            return objectMapper.treeToValue(cachedResponse.getResponseJson(), WeatherResponse.class);
-        } catch (JsonProcessingException e) {
-            log.info("Failed to deserialize cached response for city {}: {}", city, e.getMessage());
-            throw new WeatherServiceException(WeatherErrorType.SERIALIZATION_ERROR, "Failed to deserialize cached response for: " + city);
-        }
-    }
-
-    private WeatherResponse fetchWeatherFromApi(String city) {
-        log.info("Fetching weather data from API for city {}", city);
-
-        Map<String, String> queryParams = new HashMap<>();
-        queryParams.put(PARAM_QUERY, city);
-        queryParams.put(PARAM_APPID, apiKey);
-        queryParams.put(PARAM_UNITS, "metric");
-
-        log.info("Building API request with params: {}", queryParams);
-        URI url = UriBuilderUtils.buildUri(apiUrl, "weather", queryParams);
-
-        WeatherResponse response = fetchWeatherData(url, WeatherResponse.class, city);
-
-        saveWeatherDataToDatabase(city, response, queryParams);
-
-        return response;
-    }
-
-    private void saveWeatherDataToDatabase(String city, WeatherResponse response, Map<String, String> queryParams) {
-        try {
-            String responseJson = objectMapper.writeValueAsString(response);
-            String requestJson = objectMapper.writeValueAsString(queryParams);
-
-            saveWeatherResponse(city, null, ApiSource.OPEN_WEATHER, responseJson, requestJson);
-            log.info("API data saved to the database");
-        } catch (JsonProcessingException e) {
-            log.error("Failed to serialize weather data for city {}: {}", city, e.getMessage());
-            throw new WeatherServiceException(WeatherErrorType.SERIALIZATION_ERROR, "Failed to serialize weather data for: " + city);
-        }
     }
 
     @Override
@@ -183,6 +139,98 @@ public class OpenWeatherServiceImpl extends WeatherServiceBase implements OpenWe
         return mapToSimpleForecastDto(forecast);
     }
 
+    public WeatherResponse getCurrentWeatherByCoordinates(String latStr, String lonStr) {
+        Coordinates coordinates = new Coordinates(latStr, lonStr);
+
+        CoordinatesValidator validatorChain = CoordinatesValidatorChain.buildChain();
+        validatorChain.validate(coordinates);
+
+        Map<String, String> queryParams = new HashMap<>();
+        queryParams.put(PARAM_LATITUDE, String.valueOf(coordinates.getLat()));
+        queryParams.put(PARAM_LONGITUDE, String.valueOf(coordinates.getLon()));
+        queryParams.put(PARAM_APPID, apiKey);
+        queryParams.put(PARAM_LANGUAGE, "en");
+        queryParams.put(PARAM_UNITS, "metric");
+
+        URI url = UriBuilderUtils.buildUri(apiUrl, "weather", queryParams);
+        return fetchWeatherData(url, WeatherResponse.class, String.format("lat: %f lon: %f", coordinates.getLat(), coordinates.getLon()));
+    }
+
+    public WeatherResponse getWeatherAndSaveHistory(String city, CustomUserDetails userDetails) {
+        WeatherResponse response = getCurrentWeatherByCity(city);
+
+        if (userDetails != null) {
+            userSearchHistoryService.saveSearchHistory(userDetails.getUserId(), city, response);
+        } else {
+            saveWeatherApiResponse(city, response);
+        }
+        return response;
+    }
+
+    public AirPollutionResponseDto getAirPollutionByCity(String city) {
+        WeatherResponse weatherResponse = getCurrentWeatherByCity(city);
+        if (weatherResponse.getCoord() == null) {
+            throw new WeatherServiceException(null, "Missing coordinate data for city: " + city);
+        }
+        double lat = weatherResponse.getCoord().getLat();
+        double lon = weatherResponse.getCoord().getLon();
+        return getAirPollutionByCoordinates(lat, lon);
+    }
+
+    // ==================== Helper Method ====================
+
+    public void saveWeatherApiResponse(String city, WeatherResponse weatherResponse) {
+        WeatherApiResponse weatherApiResponse = new WeatherApiResponse();
+        weatherApiResponse.setCity(city);
+        weatherApiResponse.setApiSource(ApiSource.OPEN_WEATHER);
+        weatherApiResponse.setResponseJson(objectMapper.valueToTree(weatherResponse));
+        weatherApiResponse.setRequestJson(objectMapper.valueToTree(weatherResponse));
+        weatherApiResponse.setCreatedAt(LocalDateTime.now());
+
+        weatherApiResponseRepository.save(weatherApiResponse);
+    }
+
+    private WeatherResponse processCachedResponse(String city, WeatherApiResponse cachedResponse) {
+        log.info("Returning cached response for city {}", city);
+        try {
+            return objectMapper.treeToValue(cachedResponse.getResponseJson(), WeatherResponse.class);
+        } catch (JsonProcessingException e) {
+            log.info("Failed to deserialize cached response for city {}: {}", city, e.getMessage());
+            throw new WeatherServiceException(WeatherErrorType.SERIALIZATION_ERROR, "Failed to deserialize cached response for: " + city);
+        }
+    }
+
+    private WeatherResponse fetchWeatherFromApi(String city) {
+        log.info("Fetching weather data from API for city {}", city);
+
+        Map<String, String> queryParams = new HashMap<>();
+        queryParams.put(PARAM_QUERY, city);
+        queryParams.put(PARAM_APPID, apiKey);
+        queryParams.put(PARAM_UNITS, "metric");
+
+        log.info("Building API request with params: {}", queryParams);
+        URI url = UriBuilderUtils.buildUri(apiUrl, "weather", queryParams);
+
+        WeatherResponse response = fetchWeatherData(url, WeatherResponse.class, city);
+
+        saveWeatherDataToDatabase(city, response, queryParams);
+
+        return response;
+    }
+
+    private void saveWeatherDataToDatabase(String city, WeatherResponse response, Map<String, String> queryParams) {
+        try {
+            String responseJson = objectMapper.writeValueAsString(response);
+            String requestJson = objectMapper.writeValueAsString(queryParams);
+
+            saveWeatherResponse(city, null, ApiSource.OPEN_WEATHER, responseJson, requestJson);
+            log.info("API data saved to the database");
+        } catch (JsonProcessingException e) {
+            log.error("Failed to serialize weather data for city {}: {}", city, e.getMessage());
+            throw new WeatherServiceException(WeatherErrorType.SERIALIZATION_ERROR, "Failed to serialize weather data for: " + city);
+        }
+    }
+
     private void validateForecast(HourlyForecastResponseDto forecast, String city) {
         if (forecast == null || forecast.getList() == null || forecast.getList().isEmpty()) {
             throw new WeatherServiceException(
@@ -202,39 +250,5 @@ public class OpenWeatherServiceImpl extends WeatherServiceBase implements OpenWe
                 .collect(Collectors.toList());
     }
 
-    private WeatherForecastDailyResponseDto mapToWeatherForecastDailyResponseDto(HourlyForecastResponseDto forecast) {
-       WeatherForecastDailyResponseDto dailyResponse = new WeatherForecastDailyResponseDto();
 
-       dailyResponse.setCnt(forecast.getList() != null ? forecast.getList().size() : 0);
-       dailyResponse.setCity(forecast.getCity());
-       List<ForecastDailyDto> dailyList = forecast.getList().stream().map(
-               item -> {
-                   ForecastDailyDto dailyDto = new ForecastDailyDto();
-                   dailyDto.setMain(item.getMain());
-                   dailyDto.setWeather(item.getWeather());
-                   dailyDto.setWind(item.getWind());
-                   return dailyDto;
-               }
-       ).collect(Collectors.toList());
-       dailyResponse.setList(dailyList);
-
-       return dailyResponse;
-    }
-
-    public WeatherResponse getCurrentWeatherByCoordinates(String latStr, String lonStr) {
-        Coordinates coordinates = new Coordinates(latStr, lonStr);
-
-        CoordinatesValidator validatorChain = CoordinatesValidatorChain.buildChain();
-        validatorChain.validate(coordinates);
-
-        Map<String, String> queryParams = new HashMap<>();
-        queryParams.put(PARAM_LATITUDE, String.valueOf(coordinates.getLat()));
-        queryParams.put(PARAM_LONGITUDE, String.valueOf(coordinates.getLon()));
-        queryParams.put(PARAM_APPID, apiKey);
-        queryParams.put(PARAM_LANGUAGE, "en");
-        queryParams.put(PARAM_UNITS, "metric");
-
-        URI url = UriBuilderUtils.buildUri(apiUrl, "weather", queryParams);
-        return fetchWeatherData(url, WeatherResponse.class, String.format("lat: %f lon: %f", coordinates.getLat(), coordinates.getLon()));
-    }
 }
