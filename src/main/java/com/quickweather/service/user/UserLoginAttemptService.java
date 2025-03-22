@@ -33,6 +33,7 @@ public class UserLoginAttemptService {
                 securityEventService.logEvent(email, SecurityEventType.MULTIPLE_LOGIN_ATTEMPTS, "system");
             }
             userRepository.save(user);
+            log.info("Incrementing failed attempts for user {}, current attempts={}", email, user.getFailedAttempts());
         }
     }
 
