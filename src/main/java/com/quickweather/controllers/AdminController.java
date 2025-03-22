@@ -1,21 +1,27 @@
 package com.quickweather.controllers;
 
 import com.quickweather.domain.SecurityEvent;
+import com.quickweather.domain.UserActivityLog;
 import com.quickweather.dto.admin.AdminStatsResponse;
 import com.quickweather.dto.apiResponse.ApiResponse;
 import com.quickweather.dto.apiResponse.OperationType;
 import com.quickweather.dto.user.user_auth.ChangePasswordRequest;
 import com.quickweather.service.admin.AdminService;
 import com.quickweather.service.admin.SecurityEventService;
+import com.quickweather.service.admin.UserActivityService;
 import com.quickweather.service.user.PasswordService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
+import java.util.List;
 
 @Slf4j
 @CrossOrigin(origins = "http://localhost:4200")
@@ -30,6 +36,8 @@ public class AdminController {
 
     private final PasswordService passwordService;
 
+    private final UserActivityService userActivityService;
+
     @GetMapping("/stats")
     public ResponseEntity<AdminStatsResponse> getDashboardStats() {
         AdminStatsResponse stats = adminService.getDashboardStats();
@@ -41,10 +49,30 @@ public class AdminController {
         return ResponseEntity.ok(adminService.getAllUsers(pageable));
     }
 
-    @PutMapping("/users/{userId}/status")
-    public ResponseEntity<?> updateUserStatus(@PathVariable Long userId, @RequestParam boolean enabled) {
-        adminService.updateUserStatus(userId, enabled);
-        return ResponseEntity.ok().build();
+    @PatchMapping("/users/{userId}/enable")
+    public ResponseEntity<ApiResponse> enableUser(@PathVariable Long userId) {
+        adminService.enableUser(userId);
+        ApiResponse apiResponse = ApiResponse.buildApiResponse("User enabled successfully", OperationType.CHANGE_USER_STATUS);
+        return ResponseEntity.ok(apiResponse);
+    }
+
+    @PatchMapping("/users/{userId}/disable")
+    public ResponseEntity<ApiResponse> disableUser(@PathVariable Long userId) {
+        adminService.disableUser(userId);
+        ApiResponse apiResponse = ApiResponse.buildApiResponse("User disabled successfully", OperationType.CHANGE_USER_STATUS);
+        return ResponseEntity.ok(apiResponse);
+    }
+
+    @GetMapping("/user-activity")
+    public ResponseEntity<List<UserActivityLog>> searchUserActivity(
+            @RequestParam(required = false) String userId,
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) String city,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+
+        List<UserActivityLog> results = userActivityService.search(userId, email, city, startDate, endDate);
+        return ResponseEntity.ok(results);
     }
 
     @GetMapping("/logs")
