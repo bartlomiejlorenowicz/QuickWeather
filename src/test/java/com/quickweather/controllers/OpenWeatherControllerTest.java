@@ -143,7 +143,7 @@ class OpenWeatherControllerTest extends IntegrationTestConfig {
                         .param("city", "UnknownCity")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.message").value("Data not found for: UnknownCity"));
+                .andExpect(jsonPath("$.message").value("Data not found for: Unknowncity"));
     }
 
     @Test
@@ -232,7 +232,7 @@ class OpenWeatherControllerTest extends IntegrationTestConfig {
                         .withBody(responseDto)
                         .withStatus(200)));
 
-        mockMvc.perform(MockMvcRequestBuilders.get(url + "/city/air-quality")
+        mockMvc.perform(MockMvcRequestBuilders.get(url + "/air-quality")
                         .header("Authorization", "Bearer " + tokenUser)
                         .param("city", "London")
                         .contentType(MediaType.APPLICATION_JSON))

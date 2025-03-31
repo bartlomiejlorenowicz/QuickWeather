@@ -23,8 +23,7 @@ public class WeatherController {
 
     @GetMapping("/city")
     public WeatherResponse getCurrentWeatherByCity(
-            @RequestParam
-            @NotBlank(message = "City name cannot be blank") String city) {
+            @RequestParam @NotBlank(message = "City name cannot be blank") String city) {
         return currentWeatherService.getCurrentWeatherByCity(city);
     }
 

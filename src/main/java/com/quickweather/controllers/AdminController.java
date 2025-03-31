@@ -3,6 +3,7 @@ package com.quickweather.controllers;
 import com.quickweather.domain.SecurityEvent;
 import com.quickweather.domain.UserActivityLog;
 import com.quickweather.dto.admin.AdminStatsResponse;
+import com.quickweather.dto.admin.AdminUserDTO;
 import com.quickweather.dto.apiResponse.ApiResponse;
 import com.quickweather.dto.apiResponse.OperationType;
 import com.quickweather.dto.user.user_auth.ChangePasswordRequest;
@@ -10,11 +11,14 @@ import com.quickweather.service.admin.AdminService;
 import com.quickweather.service.admin.SecurityEventService;
 import com.quickweather.service.admin.UserActivityService;
 import com.quickweather.service.user.PasswordService;
+import com.quickweather.service.user.UserLoginAttemptService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -45,8 +49,14 @@ public class AdminController {
     }
 
     @GetMapping("/users")
-    public ResponseEntity<?> getAllUsers(Pageable pageable) {
-        return ResponseEntity.ok(adminService.getAllUsers(pageable));
+    public ResponseEntity<Page<AdminUserDTO>> getAllUsers(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String email
+    ) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("id"));
+        Page<AdminUserDTO> users = adminService.getAllUsers(email, pageable);
+        return ResponseEntity.ok(users);
     }
 
     @PatchMapping("/users/{userId}/enable")

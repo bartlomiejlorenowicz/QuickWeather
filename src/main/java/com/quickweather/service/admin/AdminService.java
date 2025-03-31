@@ -18,6 +18,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -29,6 +30,7 @@ public class AdminService {
     private final UserRepository userRepository;
     private final ApiQueryLogRepository apiQueryLogRepository;
     private final EntityManager entityManager;
+    private final Clock clock;
 
     public AdminStatsResponse getDashboardStats() {
         long activeUsers = userRepository.countByIsEnabledTrue();
@@ -56,15 +58,20 @@ public class AdminService {
         return stats;
     }
 
-    public Page<AdminUserDTO> getAllUsers(Pageable pageable) {
-        return userRepository.findAll(pageable)
-                .map(user -> new AdminUserDTO(
-                        user.getId(),
-                        user.getFirstName(),
-                        user.getLastName(),
-                        user.getEmail(),
-                        user.isEnabled()
-                ));
+    public Page<AdminUserDTO> getAllUsers(String email, Pageable pageable) {
+        Page<User> userPage;
+        if (email != null && !email.isEmpty()) {
+            userPage = userRepository.findByEmail(email, pageable);
+        } else {
+            userPage = userRepository.findAll(pageable);
+        }
+        return userPage.map(user -> new AdminUserDTO(
+                user.getId(),
+                user.getFirstName(),
+                user.getLastName(),
+                user.getEmail(),
+                user.isEnabled()
+        ));
     }
 
     public void updateUserStatus(Long userId, UserStatusRequest request) {
@@ -84,7 +91,7 @@ public class AdminService {
         } else {
             // Alternatywnie pozostawić enabled=false,
             log.info("Disabling user: {}. Setting future lock date.", user.getEmail());
-            user.setLockUntil(LocalDateTime.now().plusYears(100));
+            user.setLockUntil(LocalDateTime.now(clock).plusYears(100));
         }
 
         if (request.isUnblock()) {
@@ -113,6 +120,4 @@ public class AdminService {
         request.setEnabled(false);
         updateUserStatus(userId, request);
     }
-
-
 }

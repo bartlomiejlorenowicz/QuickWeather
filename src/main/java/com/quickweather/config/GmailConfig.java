@@ -78,7 +78,7 @@ public class GmailConfig {
 
     @Bean
     public NetHttpTransport netHttpTransport() throws GeneralSecurityException, IOException {
-        // Tworzy zaufany transport HTTP (zależność google-api-client)
+
         return GoogleNetHttpTransport.newTrustedTransport();
     }
 

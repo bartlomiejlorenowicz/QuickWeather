@@ -6,10 +6,7 @@ import com.quickweather.domain.ApiQueryLog;
 import com.quickweather.dto.weatherDtos.airpollution.AirPollutionResponseDto;
 import com.quickweather.dto.weatherDtos.forecast.HourlyForecastResponseDto;
 import com.quickweather.dto.weatherDtos.forecast.WeatherForecastDailyResponseDto;
-import com.quickweather.dto.weatherDtos.weather.Coordinates;
-import com.quickweather.dto.weatherDtos.weather.SimpleForecastDto;
-import com.quickweather.dto.weatherDtos.weather.WeatherResponse;
-import com.quickweather.dto.weatherDtos.weather.WeatherByZipCodeResponseDto;
+import com.quickweather.dto.weatherDtos.weather.*;
 import com.quickweather.domain.ApiSource;
 import com.quickweather.domain.WeatherApiResponse;
 import com.quickweather.exceptions.WeatherErrorType;
@@ -72,10 +69,11 @@ public class OpenWeatherServiceImpl extends WeatherServiceBase implements OpenWe
 
     @Override
     public WeatherResponse getCurrentWeatherByCity(String city) {
-
         if (city == null || !CITY_PATTERN.matcher(city.trim()).matches()) {
             throw new WeatherServiceException(WeatherErrorType.INVALID_CITY_NAME, "Invalid city name provided: " + city);
         }
+
+        city = normalizedCity(city);
 
         Optional<WeatherApiResponse> cachedResponse = getCacheWeatherResponse(city, ApiSource.OPEN_WEATHER);
         if (cachedResponse.isPresent()) {
@@ -133,10 +131,38 @@ public class OpenWeatherServiceImpl extends WeatherServiceBase implements OpenWe
         return fetchWeatherData(url, WeatherForecastDailyResponseDto.class, city + "," + cnt);
     }
 
-    public List<SimpleForecastDto> getSimpleForecast(String city) {
-        HourlyForecastResponseDto forecast = get5DaysForecastEvery3Hours(city);
-        validateForecast(forecast, city);
+    public List<SimpleForecastDto> getSimpleForecast(String city, Double lat, Double lon) {
+        HourlyForecastResponseDto forecast;
+        if (lat != null && lon != null) {
+            forecast = get5DaysForecastEvery3HoursByCoordinates(lat, lon);
+            validateForecast(forecast, lat + ", " + lon);
+        } else if (city != null && !city.isBlank()) {
+            forecast = get5DaysForecastEvery3Hours(city);
+            validateForecast(forecast, city);
+        } else {
+            throw new WeatherServiceException(WeatherErrorType.MISSING_PARAMETERS,
+                    "Either city or coordinates must be provided");
+        }
         return mapToSimpleForecastDto(forecast);
+    }
+
+
+    public List<SimpleForecastDto> getSimpleForecastByCoordinates(double lat, double lon) {
+        HourlyForecastResponseDto forecast = get5DaysForecastEvery3HoursByCoordinates(lat, lon);
+        validateForecast(forecast, lat + "," + lon);
+        return mapToSimpleForecastDto(forecast);
+    }
+
+    public HourlyForecastResponseDto get5DaysForecastEvery3HoursByCoordinates(double lat, double lon) {
+        Map<String, String> queryParams = new HashMap<>();
+        queryParams.put(PARAM_LATITUDE, String.valueOf(lat));
+        queryParams.put(PARAM_LONGITUDE, String.valueOf(lon));
+        queryParams.put(PARAM_APPID, apiKey);
+        queryParams.put(PARAM_UNITS, "metric");
+        queryParams.put(PARAM_LANGUAGE, "pl");
+
+        URI url = UriBuilderUtils.buildUri(apiUrl, "forecast", queryParams);
+        return fetchWeatherData(url, HourlyForecastResponseDto.class, lat + "," + lon);
     }
 
     public WeatherResponse getCurrentWeatherByCoordinates(String latStr, String lonStr) {
@@ -175,6 +201,16 @@ public class OpenWeatherServiceImpl extends WeatherServiceBase implements OpenWe
         double lat = weatherResponse.getCoord().getLat();
         double lon = weatherResponse.getCoord().getLon();
         return getAirPollutionByCoordinates(lat, lon);
+    }
+
+    public AirPollutionResponseDto getAirPollution(String city, Double lat, Double lon) {
+        if (lat != null && lon != null) {
+            return getAirPollutionByCoordinates(lat, lon);
+        } else if (city != null && !city.isBlank()) {
+            return getAirPollutionByCity(city);
+        } else {
+            throw new WeatherServiceException(null, "Either city or coordinates must be provided");
+        }
     }
 
     // ==================== Helper Method ====================
@@ -223,7 +259,8 @@ public class OpenWeatherServiceImpl extends WeatherServiceBase implements OpenWe
             String responseJson = objectMapper.writeValueAsString(response);
             String requestJson = objectMapper.writeValueAsString(queryParams);
 
-            saveWeatherResponse(city, null, ApiSource.OPEN_WEATHER, responseJson, requestJson);
+            WeatherResponseData data = new WeatherResponseData(city, null, ApiSource.OPEN_WEATHER, responseJson, requestJson);
+            saveWeatherResponse(data);
             log.info("API data saved to the database");
         } catch (JsonProcessingException e) {
             log.error("Failed to serialize weather data for city {}: {}", city, e.getMessage());
@@ -250,5 +287,8 @@ public class OpenWeatherServiceImpl extends WeatherServiceBase implements OpenWe
                 .collect(Collectors.toList());
     }
 
+    private String normalizedCity(String city) {
+        return city.substring(0, 1).toUpperCase() + city.substring(1).toLowerCase();
+    }
 
 }

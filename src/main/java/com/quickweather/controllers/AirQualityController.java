@@ -1,10 +1,7 @@
 package com.quickweather.controllers;
 
 import com.quickweather.dto.weatherDtos.airpollution.AirPollutionResponseDto;
-import com.quickweather.dto.weatherDtos.weather.WeatherResponse;
-import com.quickweather.exceptions.WeatherServiceException;
 import com.quickweather.service.weather.OpenWeatherServiceImpl;
-import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,8 +18,11 @@ public class AirQualityController {
     private final OpenWeatherServiceImpl currentWeatherService;
 
     @GetMapping("/air-quality")
-    public AirPollutionResponseDto getAirPollutionByCity(
-            @RequestParam @NotBlank(message = "City name cannot be blank") String city) {
-        return currentWeatherService.getAirPollutionByCity(city);
+    public AirPollutionResponseDto getAirPollution(
+            @RequestParam(required = false) String city,
+            @RequestParam(required = false) Double lat,
+            @RequestParam(required = false) Double lon) {
+        return currentWeatherService.getAirPollution(city, lat, lon);
     }
+
 }

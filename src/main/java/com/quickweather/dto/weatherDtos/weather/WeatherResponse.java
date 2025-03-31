@@ -1,6 +1,7 @@
 package com.quickweather.dto.weatherDtos.weather;
 
 import com.quickweather.dto.weatherDtos.location.Coord;
+import com.quickweather.dto.weatherDtos.location.SysDto;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -16,5 +17,6 @@ public class WeatherResponse {
     private Coord coord;
     private int visibility;
     private Wind wind;
+    private SysDto sys;
 
 }

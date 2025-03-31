@@ -5,11 +5,13 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.quickweather.domain.ApiSource;
 import com.quickweather.domain.WeatherApiResponse;
+import com.quickweather.dto.weatherDtos.weather.WeatherResponseData;
 import com.quickweather.exceptions.WeatherErrorType;
 import com.quickweather.exceptions.WeatherServiceException;
 import com.quickweather.repository.WeatherApiResponseRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
@@ -45,14 +47,17 @@ public abstract class WeatherServiceBase {
     protected void handleHttpClientError(HttpClientErrorException e, String identifier) {
         log.error("HTTP error fetching weather data for {}: {}", identifier, e.getMessage());
 
-        if (e.getStatusCode() == HttpStatus.UNAUTHORIZED) {
-            throw new WeatherServiceException(WeatherErrorType.INVALID_API_KEY, "Invalid API key");
-        } else if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
-            throw new WeatherServiceException(WeatherErrorType.DATA_NOT_FOUND, "Data not found for: " + identifier);
-        } else if (e.getStatusCode() == HttpStatus.SERVICE_UNAVAILABLE) {
-            throw new WeatherServiceException(WeatherErrorType.WEATHER_DATA_UNAVAILABLE, "Weather service unavailable");
-        } else {
-            throw new WeatherServiceException(WeatherErrorType.EXTERNAL_API_ERROR, "Error fetching weather data for: " + identifier);
+        int statusCode = e.getStatusCode().value();
+
+        switch (statusCode) {
+            case 401:
+                throw new WeatherServiceException(WeatherErrorType.INVALID_API_KEY, "Invalid API key");
+            case 404:
+                throw new WeatherServiceException(WeatherErrorType.DATA_NOT_FOUND, "Data not found for: " + identifier);
+            case 503:
+                throw new WeatherServiceException(WeatherErrorType.WEATHER_DATA_UNAVAILABLE, "Weather service unavailable");
+            default:
+                throw new WeatherServiceException(WeatherErrorType.EXTERNAL_API_ERROR, "Error fetching weather data for: " + identifier);
         }
     }
 
@@ -62,29 +67,31 @@ public abstract class WeatherServiceBase {
     }
 
     //zapisuje JSON do bazy
-    public void saveWeatherResponse(String city, String countryCode, ApiSource apiSource, String responseJson, String requestJson) throws JsonProcessingException {
+    public void saveWeatherResponse(WeatherResponseData data) throws JsonProcessingException {
 
-        if (responseJson == null || responseJson.isEmpty()) {
-            log.error("Response JSON is null or empty for city: {}", city);
-            throw new WeatherServiceException(WeatherErrorType.DATA_NOT_FOUND, "Response JSON is invalid for city: " + city);
-        }
-        if (requestJson == null || requestJson.isEmpty()) {
-            log.error("Request JSON is null or empty for city: {}", city);
-            throw new WeatherServiceException(WeatherErrorType.DATA_NOT_FOUND, "Request JSON is invalid for city: " + city);
-        }
-
-        JsonNode validatedResponseJson = objectMapper.readTree(responseJson);
-        JsonNode validatedRequestJson = objectMapper.readTree(requestJson);
+        JsonNode validatedResponseJson = validateJson(data.getResponseJson(), "Response", data.getCity());
+        JsonNode validatedRequestJson = validateJson(data.getRequestJson(), "Request", data.getCity());
 
         WeatherApiResponse weatherApiResponse = new WeatherApiResponse();
-        weatherApiResponse.setCity(city);
-        weatherApiResponse.setCountryCode(countryCode);
-        weatherApiResponse.setApiSource(apiSource);
+        weatherApiResponse.setCity(data.getCity());
+        weatherApiResponse.setCountryCode(data.getCountryCode());
+        weatherApiResponse.setApiSource(data.getApiSource());
         weatherApiResponse.setRequestJson(validatedRequestJson);
         weatherApiResponse.setResponseJson(validatedResponseJson);
         weatherApiResponse.setCreatedAt(LocalDateTime.now());
 
         weatherApiResponseRepository.save(weatherApiResponse);
+    }
+
+//    ============ Helper Method ===============
+
+    private JsonNode validateJson(String json, String type, String city) throws JsonProcessingException {
+        if (json == null || json.isEmpty()) {
+            log.error("Response JSON is null or empty for city: {}", type, city);
+            throw new WeatherServiceException(WeatherErrorType.DATA_NOT_FOUND,
+                    type + " Response JSON is invalid for city: " + city);
+        }
+        return objectMapper.readTree(json);
     }
 
 }
