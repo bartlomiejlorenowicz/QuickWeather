@@ -31,7 +31,8 @@ public class JwtFilter extends OncePerRequestFilter {
             "/api/v1/weather/forecast",
             "/api/v1/weather/zipcode",
             "/api/v1/weather/coordinate",
-            "/api/v1/weather/forecast/daily"
+            "/api/v1/weather/forecast/daily",
+            "/swagger-ui/**", "/v3/api-docs/**"
     );
 
     public JwtFilter(JwtUtil jwtUtil, CustomUserDetailsService userDetailsService) {

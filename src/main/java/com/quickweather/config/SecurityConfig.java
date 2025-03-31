@@ -71,7 +71,8 @@ public class SecurityConfig {
                                 "/api/v1/weather/forecast/daily",
                                 "/api/v1/user/auth/forgot-password",
                                 "/api/v1/weather/air-quality",
-                                "/api/v1/history"
+                                "/api/v1/history",
+                                "/swagger-ui/**", "/v3/api-docs/**"
                         ).permitAll()
                         .requestMatchers("/api/v1/history/current-with-user-history").authenticated()
                         .requestMatchers("/api/v1/user/auth/change-password").authenticated()
