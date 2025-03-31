@@ -29,33 +29,41 @@ public class UserAuthenticationService {
     private final UserLoginAttemptService userLoginAttemptService;
 
     public LoginResponse login(LoginRequest loginRequest) {
-        if (loginRequest.getEmail().isBlank() || loginRequest.getPassword().isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email and password must not be blank");
-        }
+        validateLoginRequest(loginRequest);
 
         Optional<User> userOpt = userRepository.findByEmail(loginRequest.getEmail());
-        if (userOpt.isPresent()) {
-            User user = userOpt.get();
-            if (userLoginAttemptService.isAccountLocked(user)) {
-                throw new ResponseStatusException(HttpStatus.LOCKED, "Your account is locked for 15 minutes. Please try again later.");
-            }
+        if (userOpt.isEmpty()) {
+            log.error("Authentication failed for user: {}", loginRequest.getEmail());
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
+        }
+
+        User user = userOpt.get();
+        if (userLoginAttemptService.isAccountLocked(user)) {
+            throw new ResponseStatusException(HttpStatus.LOCKED, "Your account is locked for 15 minutes. Please try again later.");
         }
 
         try {
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword())
-            );
+            Authentication authentication = authenticateUser(loginRequest);
             userLoginAttemptService.resetFailedAttempts(loginRequest.getEmail());
             CustomUserDetails customUserDetails = (CustomUserDetails) authentication.getPrincipal();
             Map<String, Object> tokenMap = jwtUtil.generateToken(customUserDetails, customUserDetails.getUuid());
             return LoginResponse.fromTokenMap(tokenMap, customUserDetails);
         } catch (AuthenticationException e) {
-            Optional<User> userOptAfter = userRepository.findByEmail(loginRequest.getEmail());
-            if (userOptAfter.isPresent() && userLoginAttemptService.isAccountLocked(userOptAfter.get())) {
-                throw new ResponseStatusException(HttpStatus.LOCKED, "Your account is locked for 15 minutes. Please try again later.");
-            }
             log.error("Authentication failed for user: {}", loginRequest.getEmail());
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
         }
     }
+
+    private void validateLoginRequest(LoginRequest loginRequest) {
+        if (loginRequest.getEmail().isBlank() || loginRequest.getPassword().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email and password must not be blank");
+        }
+    }
+
+    private Authentication authenticateUser(LoginRequest loginRequest) throws AuthenticationException {
+        return authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword())
+        );
+    }
+
 }

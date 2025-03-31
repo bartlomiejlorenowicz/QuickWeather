@@ -14,7 +14,7 @@
             <column name="id" type="BIGINT" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="uuid" type="UUID" defaultValueComputed="gen_random_uuid()" />
+            <column name="uuid" type="UUID" defaultValueComputed="gen_random_uuid()"/>
             <column name="first_name" type="VARCHAR(255)">
                 <constraints nullable="false"/>
             </column>
@@ -82,12 +82,12 @@
     <changeSet id="004-initialize-roles" author="Bartek">
         <sql>
             INSERT INTO public.roles (id, name)
-            SELECT 1, 'USER'
-                WHERE NOT EXISTS (SELECT 1 FROM public.roles WHERE id = 1);
+            SELECT 1,
+                   'USER' WHERE NOT EXISTS (SELECT 1 FROM public.roles WHERE id = 1);
 
             INSERT INTO public.roles (id, name)
-            SELECT 2, 'ADMIN'
-                WHERE NOT EXISTS (SELECT 1 FROM public.roles WHERE id = 2);
+            SELECT 2,
+                   'ADMIN' WHERE NOT EXISTS (SELECT 1 FROM public.roles WHERE id = 2);
         </sql>
     </changeSet>
 
@@ -270,7 +270,8 @@
         <insert tableName="email_templates">
             <column name="template_code" value="WELCOME_EMAIL"/>
             <column name="subject" value="Welcome to QuickWeather!"/>
-            <column name="body" value="Hi %s,&#10;Thank you for registering with QuickWeather. We hope you enjoy using our service!"/>
+            <column name="body"
+                    value="Hi %s,&#10;Thank you for registering with QuickWeather. We hope you enjoy using our service!"/>
         </insert>
     </changeSet>
 
@@ -344,5 +345,71 @@
             <column name="lock_until" type="TIMESTAMP"/>
         </addColumn>
     </changeSet>
+
+    <changeSet id="022-create-api-query-log" author="Bartek">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="api_query_log"/>
+            </not>
+        </preConditions>
+        <sql>
+        <![CDATA[
+            CREATE TABLE api_query_log
+            (
+                id         BIGSERIAL PRIMARY KEY,
+                city       VARCHAR(255) NOT NULL,
+                queried_at TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP
+            );
+            ]]>
+    </sql>
+    </changeSet>
+
+    <changeSet id="023-create-user-activity-log" author="Bartek">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="user_activity_log"/>
+            </not>
+        </preConditions>
+        <createTable tableName="user_activity_log">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_id" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="city" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="timestamp" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="activity" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="024-rename-user-id-to-email" author="Bartek">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="user_activity_log" columnName="user_id"/>
+        </preConditions>
+        <renameColumn tableName="user_activity_log"
+                      oldColumnName="user_id"
+                      newColumnName="email"
+                      columnDataType="VARCHAR(255)"/>
+    </changeSet>
+
+    <changeSet id="025-add-user-id-to-user-activity-log" author="Bartek">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="user_activity_log" columnName="user_id"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="user_activity_log">
+            <column name="user_id" type="VARCHAR(255)" />
+        </addColumn>
+    </changeSet>
+
+
 
 </databaseChangeLog>

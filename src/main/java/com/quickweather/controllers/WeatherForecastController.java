@@ -8,6 +8,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -25,8 +26,10 @@ public class WeatherForecastController {
 
     @GetMapping
     public List<SimpleForecastDto> getForecast(
-            @RequestParam @NotBlank(message = "City name cannot be blank") String city) {
-        return currentWeatherService.getSimpleForecast(city);
+            @RequestParam(required = false) String city,
+            @RequestParam(required = false) Double lat,
+            @RequestParam(required = false) Double lon) {
+        return currentWeatherService.getSimpleForecast(city, lat, lon);
     }
 
     @GetMapping("/daily")

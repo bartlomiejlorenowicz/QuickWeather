@@ -28,6 +28,7 @@ public class UserAuthenticationController {
         return ResponseEntity.ok(response);
     }
 
+    //ApiResponse - bazowa
     @PostMapping("/change-password")
     public ResponseEntity<ApiResponse> changePassword(@Valid @RequestBody ChangePasswordRequest request, Authentication authentication) {
         log.info("Authenticated user: {}", authentication.getName());

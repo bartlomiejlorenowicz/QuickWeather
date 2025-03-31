@@ -47,7 +47,7 @@ public class PasswordResetController {
     public ResponseEntity<ApiResponse> validateResetToken(@Valid @RequestBody TokenRequest tokenRequest) {
         String token = tokenRequest.getToken();
         log.info("Validating reset token: '{}'", token);
-        tokenValidationService.validateResetTokenOrThrow(token);
+        tokenValidationService.validateResetTokenOrThrow(token); // token
         ApiResponse response = ApiResponse.buildApiResponse("Token is valid", OperationType.VALIDATE_RESET_TOKEN);
 
         return ResponseEntity.ok(response);

@@ -8,6 +8,7 @@ import com.quickweather.dto.weatherDtos.weather.WeatherByZipCodeResponseDto;
 import com.quickweather.dto.weatherDtos.weather.WeatherResponse;
 import com.quickweather.domain.ApiSource;
 import com.quickweather.domain.WeatherApiResponse;
+import com.quickweather.dto.weatherDtos.weather.WeatherResponseData;
 import com.quickweather.exceptions.WeatherErrorType;
 import com.quickweather.exceptions.WeatherServiceException;
 import com.quickweather.repository.WeatherApiResponseRepository;
@@ -100,7 +101,8 @@ class OpenWeatherServiceImplTest {
 
         Mockito.when(weatherApiResponseRepository.save(any(WeatherApiResponse.class))).thenReturn(mockSavedResponse);
 
-        currentWeatherService.saveWeatherResponse(city, countryCode, ApiSource.OPEN_WEATHER, responseJson, requestJson);
+        WeatherResponseData data = new WeatherResponseData(city, countryCode, ApiSource.OPEN_WEATHER, responseJson, requestJson);
+        currentWeatherService.saveWeatherResponse(data);
 
         ArgumentCaptor<WeatherApiResponse> captor = ArgumentCaptor.forClass(WeatherApiResponse.class);
         Mockito.verify(weatherApiResponseRepository).save(captor.capture());

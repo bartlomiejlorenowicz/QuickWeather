@@ -54,8 +54,8 @@ public class GmailQuickstart {
 
         GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(
                 HTTP_TRANSPORT, JSON_FACTORY, clientSecrets, SCOPES)
-                .setDataStoreFactory(new FileDataStoreFactory(new java.io.File("tokens"))) // Tokeny będą zapisane tutaj!
-                .setAccessType("offline") // MUSI być offline, aby uzyskać refresh_token
+                .setDataStoreFactory(new FileDataStoreFactory(new java.io.File("tokens")))
+                .setAccessType("offline")
                 .build();
 
         Credential credential = flow.loadCredential("user");
