@@ -4,8 +4,6 @@ import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import com.quickweather.domain.Role;
 import com.quickweather.domain.User;
-import com.quickweather.exceptions.WeatherErrorType;
-import com.quickweather.exceptions.WeatherServiceException;
 import com.quickweather.repository.RoleRepository;
 import com.quickweather.repository.UserRepository;
 import com.quickweather.security.JwtTestUtil;
@@ -36,7 +34,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WireMockTest(httpPort = 8081)
 @Import(TestConfig.class)
 @SpringBootTest
-class OpenWeatherControllerTest extends IntegrationTestConfig {
+class WeatherControllerTest extends IntegrationTestConfig {
 
     @Autowired
     private UserRepository userRepository;
@@ -80,7 +78,6 @@ class OpenWeatherControllerTest extends IntegrationTestConfig {
 
         userRepository.save(user);
 
-        // Generowanie tokenów JWT
         tokenUser = jwtTestUtil.generateToken(user.getEmail(), "ROLE_USER");
     }
 
@@ -346,18 +343,5 @@ class OpenWeatherControllerTest extends IntegrationTestConfig {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Latitude must be between -90 and 90"));
     }
-
-//    @Test
-//    void shouldThrowException_WhenCityNameContainsInvalidCharacters() {
-//        // Przykładowa nieprawidłowa nazwa miasta zawierająca cyfry i znaki specjalne
-//        String invalidCity = "London123!";
-//
-//        WeatherServiceException exception = assertThrows(WeatherServiceException.class, () ->
-//                openWeatherServiceImpl.getCurrentWeatherByCity(invalidCity)
-//        );
-//        // Sprawdzamy, czy typ błędu odpowiada INVALID_CITY_NAME
-//        assertEquals(WeatherErrorType.INVALID_CITY_NAME, exception.getErrorType());
-//    }
-    // todo
 
 }

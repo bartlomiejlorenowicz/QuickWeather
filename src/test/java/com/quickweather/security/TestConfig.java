@@ -25,7 +25,7 @@ public class TestConfig {
     public UserDetailsService userDetailsService() {
         UserDetails testUser = User.builder()
                 .username("testUser@service.pl")
-                .password("password") // Use NoOpPasswordEncoder for testing
+                .password("password")
                 .roles("USER")
                 .build();
         return new InMemoryUserDetailsManager(testUser);
@@ -37,7 +37,7 @@ public class TestConfig {
 
     @Bean
     public AuthenticationManager authenticationManager() {
-        return authentication -> authentication; // Mock AuthenticationManager for tests
+        return authentication -> authentication;
     }
 
     @Bean
