@@ -41,18 +41,14 @@ public class WeatherController {
 
     private final OpenWeatherServiceImpl currentWeatherService;
 
-    private final AccuWeatherServiceImpl accuWeatherService;
-
     private final UserSearchHistoryRepository userSearchHistoryRepository;
 
     private final UserSearchHistoryService userSearchHistoryService;
 
     public WeatherController(OpenWeatherServiceImpl currentWeatherService,
-                             AccuWeatherServiceImpl accuWeatherService,
                              UserSearchHistoryRepository userSearchHistoryRepository,
                              UserSearchHistoryService userSearchHistoryService) {
         this.currentWeatherService = currentWeatherService;
-        this.accuWeatherService = accuWeatherService;
         this.userSearchHistoryRepository = userSearchHistoryRepository;
         this.userSearchHistoryService = userSearchHistoryService;
     }
@@ -65,14 +61,11 @@ public class WeatherController {
         WeatherResponse response = getCurrentWeatherByCity(city);
 
         if (userDetails != null) {
-            // Zalogowany użytkownik - zapisujemy dane w UserSearchHistory
             userSearchHistoryService.saveSearchHistory(userId, city, response);
         } else {
-            // Niezalogowany użytkownik - zapisujemy dane w WeatherApiResponseHistory
             currentWeatherService.saveWeatherApiResponse(city, response);
         }
 
-        // Zwracamy odpowiedź pogodową
         return response;
     }
 
@@ -107,7 +100,6 @@ public class WeatherController {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Weather forecast not available for the given city");
         }
 
-        // Mapowanie na uproszczony format
         return forecast.getList().stream()
                 .map(item -> new SimpleForecastDto(
                         item.getDt_txt(),
@@ -133,32 +125,4 @@ public class WeatherController {
             @Max(value = 16, message = "Count cannot be more than 16") int cnt) {
         return currentWeatherService.getWeatherForecastByCityAndDays(city, cnt);
     }
-
-    @GetMapping("/postcode")
-    public List<AccuWeatherResponse> getLocationByPostalCode(
-            @RequestParam String postcode) {
-        return accuWeatherService.getLocationByPostalCode(postcode);
-    }
-
-    @GetMapping("/accuweather/forecast/daily/1day")
-    public AccuWeatherDailyDto getCustomAccuWeatherForecast(
-            @RequestParam @NotBlank(message = "City name cannot be blank") String city) {
-
-        try {
-            AccuWeatherResponse locationResponse = accuWeatherService.getLocationByCity(city)
-                    .stream()
-                    .findFirst()
-                    .orElseThrow(() -> new RuntimeException("No location found for the city: " + city));
-
-            String locationKey = locationResponse.getKey();
-
-            AccuWeatherDailyResponse forecastResponse = accuWeatherService.getDailyForecastByLocationKey(locationKey);
-
-            return AccuWeatherMapper.mapToCustomWeatherResponseDto(forecastResponse);
-
-        } catch (RuntimeException e) {
-            throw e;
-        }
-    }
-
 }
