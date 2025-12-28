@@ -26,7 +26,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 
-class UserAccountStatusControllerIntegrationTest extends IntegrationTestConfig {
+public class UserAccountStatusControllerIntegrationTest extends IntegrationTestConfig {
 
     @Autowired
     private UserRepository userCreationRepository;
@@ -50,7 +50,7 @@ class UserAccountStatusControllerIntegrationTest extends IntegrationTestConfig {
     }
 
     @Test
-    void shouldEnableUser() throws Exception {
+    public void shouldEnableUser() throws Exception {
         User user = User.builder()
                 .firstName("John")
                 .lastName("Doe")
@@ -83,7 +83,7 @@ class UserAccountStatusControllerIntegrationTest extends IntegrationTestConfig {
     }
 
     @Test
-    void shouldDisableUser() throws Exception {
+    public void shouldDisableUser() throws Exception {
         User user = User.builder()
                 .firstName("John")
                 .lastName("Doe")
@@ -114,7 +114,7 @@ class UserAccountStatusControllerIntegrationTest extends IntegrationTestConfig {
     }
 
     @Test
-    void shouldReturnBadRequestUserDoesNotExist() throws Exception {
+    public void shouldReturnBadRequestUserDoesNotExist() throws Exception {
 
         UserId nonExistentUserId = new UserId(999L);
 
