@@ -1,7 +1,10 @@
 package com.quickweather.controller;
 
 import com.quickweather.dto.user.UserDto;
+import com.quickweather.entity.Role;
+import com.quickweather.entity.RoleType;
 import com.quickweather.entity.User;
+import com.quickweather.repository.RoleRepository;
 import com.quickweather.repository.UserRepository;
 import com.quickweather.validator.IntegrationTestConfig;
 import org.junit.jupiter.api.*;
@@ -22,9 +25,25 @@ class UserCreationControllerTest extends IntegrationTestConfig {
     @Autowired
     private UserRepository userCreationRepository;
 
+    @Autowired
+    private RoleRepository roleRepository;
+
+    @BeforeEach
+    void ensureUserRoleExists() {
+        roleRepository.findByRoleType(RoleType.USER)
+                .orElseGet(() ->
+                        roleRepository.save(
+                                Role.builder()
+                                        .roleType(RoleType.USER)
+                                        .build()
+                        )
+                );
+    }
+
+
     @BeforeEach
     void setUp() {
-        userCreationRepository.deleteAll(); // Clear database before each test
+        userCreationRepository.deleteAll();
         User user = User.builder()
                 .firstName("Andy")
                 .lastName("Murphy")
@@ -38,10 +57,8 @@ class UserCreationControllerTest extends IntegrationTestConfig {
 
     @AfterEach
     void tearDown() {
-        userCreationRepository.deleteAll(); // Clean up database after each test
+        userCreationRepository.deleteAll();
     }
-
-
 
     @Test
     void shouldFailWhenFirstNameIsInvalid() throws Exception {

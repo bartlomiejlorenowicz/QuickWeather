@@ -55,7 +55,6 @@ class OpenWeatherControllerTest extends IntegrationTestConfig {
 
     @BeforeEach
     void setUp() {
-        // Inicjalizacja ról w bazie, jeśli nie istnieją
         if (!roleRepository.existsByRoleType(RoleType.USER)) {
             Role userRole = Role.builder().roleType(RoleType.USER).build();
             roleRepository.save(userRole);
@@ -71,7 +70,6 @@ class OpenWeatherControllerTest extends IntegrationTestConfig {
         Role adminRole = roleRepository.findByRoleType(RoleType.ADMIN)
                 .orElseThrow(() -> new IllegalStateException("ADMIN role not initialized in the database"));
 
-        // Utworzenie użytkownika
         User user = User.builder()
                 .firstName("Adam")
                 .lastName("Nowak")
@@ -83,7 +81,6 @@ class OpenWeatherControllerTest extends IntegrationTestConfig {
 
         userRepository.save(user);
 
-        // Generowanie tokenów JWT
         tokenUser = jwtTestUtil.generateToken(user.getEmail(), "ROLE_USER");
         tokenAdmin = jwtTestUtil.generateToken("adminUser", "ROLE_ADMIN");
     }
