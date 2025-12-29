@@ -1,5 +1,4 @@
 package com.quickweather.service.user;
-
 import com.quickweather.admin.SecurityEventType;
 import com.quickweather.dto.user.UserDto;
 import com.quickweather.mapper.UserMapper;
@@ -14,17 +13,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
 
-/**
- * Coordinates the entire user creation process, including:
- * <ul>
- *   <li>Validating input data via {@link UserValidator}</li>
- *   <li>Mapping a {@link UserDto} to a User entity via {@link UserMapper}</li>
- *   <li>Encoding the user's password with {@link PasswordEncoder}</li>
- *   <li>Assigning default roles using {@link UserRoleService}</li>
- *   <li>Saving the new user to the database via {@link UserSearchService}</li>
- *   <li>Sending a welcome email via {@link UserNotificationService}</li>
- * </ul>
- */
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -35,7 +23,7 @@ public class UserCreationService {
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
     private final UserRoleService userRoleService;
-    private final UserNotificationService userNotificationService;
+//    private final UserNotificationService userNotificationService;
     private final SecurityEventService securityEventService;
 
     /**
@@ -63,10 +51,9 @@ public class UserCreationService {
         log.info("User is saved with roles: {}", userEntity.getRoles());
 
         // Send welcome email
-        userNotificationService.sendWelcomeEmail(userDto.getEmail(), userDto.getFirstName());
+//        userNotificationService.sendWelcomeEmail(userDto.getEmail(), userDto.getFirstName());
 
         String ipAddress = securityEventService.getClientIpAddress();
         securityEventService.logEvent(userDto.getEmail(), SecurityEventType.ACCOUNT_CREATED, ipAddress);
     }
-
 }

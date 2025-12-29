@@ -23,14 +23,14 @@ public class CorsConfig {
     @Bean
     public CorsFilter corsFilter() {
         CorsConfiguration config = new CorsConfiguration();
-        config.addAllowedOrigin(allowedOrigins); // Adres frontendu
-        config.addAllowedMethod("*"); // Pozwól na wszystkie metody HTTP (GET, POST, etc.)
-        config.addAllowedHeader("*"); // Pozwól na wszystkie nagłówki
+        config.addAllowedOrigin(allowedOrigins);
+        config.addAllowedMethod("*");
+        config.addAllowedHeader("*");
         config.addExposedHeader("Authorization");
-        config.setAllowCredentials(true); // Pozwól na przesyłanie ciasteczek
+        config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config); // Dotyczy wszystkich endpointów
+        source.registerCorsConfiguration("/**", config);
         return new CorsFilter(source);
     }
 }

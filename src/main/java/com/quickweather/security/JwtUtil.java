@@ -12,24 +12,30 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 @Component
 @Slf4j
 public class JwtUtil {
 
-    private final SecretKey secretKey;
-    private final SecretKey resetKey;
+    private final SecretKey accessTokenKey;
+    private final SecretKey resetTokenKey;
     private final long expirationTime;
 
-    public JwtUtil(@Value("${jwt.secret}") String secret,
-                   @Value("${jwt.reset-secret}") String resetSecret,
-                   @Value("${jwt.expiration}") long expirationTime) {
+    public JwtUtil(
+            @Value("${jwt.secret}") String accessSecret,
+            @Value("${jwt.reset-secret}") String resetSecret,
+            @Value("${jwt.expiration}") long expirationTime
+    ) {
         this.expirationTime = expirationTime;
 
-        // Dekodowanie kluczy z Base64
-        this.secretKey = Keys.hmacShaKeyFor(Base64.getDecoder().decode(secret));
-        this.resetKey = Keys.hmacShaKeyFor(Base64.getDecoder().decode(resetSecret));
+        this.accessTokenKey = Keys.hmacShaKeyFor(
+                accessSecret.getBytes(StandardCharsets.UTF_8)
+        );
+        this.resetTokenKey = Keys.hmacShaKeyFor(
+                resetSecret.getBytes(StandardCharsets.UTF_8)
+        );
     }
 
     public Map<String, Object> generateToken(CustomUserDetails userDetails, UUID uuid) {
@@ -45,7 +51,7 @@ public class JwtUtil {
                         .toList())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + expirationTime))
-                .signWith(secretKey, SignatureAlgorithm.HS256)
+                .signWith(accessTokenKey, SignatureAlgorithm.HS256)
                 .compact();
 
         log.info("User authorities: {}", userDetails.getAuthorities());
@@ -65,13 +71,13 @@ public class JwtUtil {
                 .claim("type", "reset-password")
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + 15 * 60 * 1000)) // 15 min ważności
-                .signWith(resetKey, SignatureAlgorithm.HS256)
+                .signWith(resetTokenKey, SignatureAlgorithm.HS256)
                 .compact();
     }
 
     public boolean validateToken(String token) {
         try {
-            parseClaims(token, secretKey);
+            parseClaims(token, accessTokenKey);
             return true;
         } catch (JwtException e) {
             log.error("Invalid JWT token: {}", e.getMessage());
@@ -81,7 +87,7 @@ public class JwtUtil {
 
     public boolean validateResetToken(String token) {
         try {
-            Claims claims = parseClaims(token, resetKey);
+            Claims claims = parseClaims(token, resetTokenKey);
             String type = claims.get("type", String.class);
             Date expiration = claims.getExpiration();
 
@@ -96,17 +102,17 @@ public class JwtUtil {
     }
 
     public String extractUsername(String token) {
-        return parseClaims(token, secretKey).getSubject();
+        return parseClaims(token, accessTokenKey).getSubject();
     }
 
     public String extractUsernameFromResetToken(String token) {
-        return parseClaims(token, resetKey).getSubject();
+        return parseClaims(token, resetTokenKey).getSubject();
     }
 
     public String extractResetTokenForType(String token) {
         try {
             Claims claims = Jwts.parserBuilder()
-                    .setSigningKey(resetKey) // Klucz weryfikujący podpis
+                    .setSigningKey(resetTokenKey) // Klucz weryfikujący podpis
                     .build()
                     .parseClaimsJws(token) // Parsowanie tokena
                     .getBody(); // Pobranie części payload
@@ -119,7 +125,7 @@ public class JwtUtil {
     }
 
     public List<String> extractRoles(String token) {
-        Claims claims = parseClaims(token, secretKey);
+        Claims claims = parseClaims(token, accessTokenKey);
         Object roles = claims.get("roles");
         if (roles instanceof List<?> rolesList) {
             return rolesList.stream()
